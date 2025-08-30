@@ -1,0 +1,368 @@
+version: '3.8'
+
+# Nexus Platform - Docker Compose Configuration
+# Orchestrates all services and databases for the Nexus Platform
+
+services:
+  #########################################
+  # Core Services
+  #########################################
+  
+  # API Gateway - Entry point for all client requests
+  api-gateway:
+    build: 
+      context: ./docker/services/api-gateway
+      dockerfile: Dockerfile
+    image: nexus/api-gateway:latest
+    container_name: nexus-api-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - LOG_LEVEL=INFO
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+      - MQ_HOST=rabbitmq
+    volumes:
+      - ./config:/app/config
+    networks:
+      - ingress-network
+      - backend-network
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  
+  # AI Engine - Processes AI-related requests
+  ai-engine:
+    build: 
+      context: ./docker/services/ai-engine
+      dockerfile: Dockerfile
+    image: nexus/ai-engine:latest
+    container_name: nexus-ai-engine
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - LOG_LEVEL=INFO
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MQ_HOST=rabbitmq
+    volumes:
+      - ./config:/app/config
+      - ./backend/ai_engine/models:/app/models
+    networks:
+      - backend-network
+    depends_on:
+      - rabbitmq
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  
+  # Fraud Detection - Analyzes transactions for suspicious patterns
+  fraud-detection:
+    build: 
+      context: ./docker/services/fraud-detection
+      dockerfile: Dockerfile
+    image: nexus/fraud-detection:latest
+    container_name: nexus-fraud-detection
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    environment:
+      - LOG_LEVEL=INFO
+      - DB_HOST=postgres
+      - NEO4J_HOST=neo4j
+      - MQ_HOST=rabbitmq
+    volumes:
+      - ./config:/app/config
+    networks:
+      - backend-network
+      - data-network
+    depends_on:
+      - postgres
+      - neo4j
+      - rabbitmq
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  
+  # Forensic Analysis - Performs deep analysis of suspicious activities
+  forensic-analysis:
+    build: 
+      context: ./docker/services/forensic-analysis
+      dockerfile: Dockerfile
+    image: nexus/forensic-analysis:latest
+    container_name: nexus-forensic-analysis
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+    environment:
+      - LOG_LEVEL=INFO
+      - DB_HOST=postgres
+      - NEO4J_HOST=neo4j
+      - MINIO_HOST=minio
+      - MQ_HOST=rabbitmq
+    volumes:
+      - ./config:/app/config
+    networks:
+      - backend-network
+      - data-network
+    depends_on:
+      - postgres
+      - neo4j
+      - minio
+      - rabbitmq
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  
+  # Frenly AI - Meta-agent for system coordination
+  frenly-ai:
+    build: 
+      context: ./docker/services/frenly-ai
+      dockerfile: Dockerfile
+    image: nexus/frenly-ai:latest
+    container_name: nexus-frenly-ai
+    restart: unless-stopped
+    ports:
+      - "8004:8004"
+    environment:
+      - LOG_LEVEL=INFO
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MQ_HOST=rabbitmq
+    volumes:
+      - ./config:/app/config
+    networks:
+      - backend-network
+    depends_on:
+      - rabbitmq
+      - ai-engine
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      
+  #########################################
+  # Data Storage Services
+  #########################################
+  
+  # PostgreSQL - Primary relational database
+  postgres:
+    image: postgres:15.5
+    container_name: nexus-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=nexus_db
+      - POSTGRES_USER=nexus_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nexuspassword}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/data/postgres/init:/docker-entrypoint-initdb.d
+    networks:
+      - data-network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexus_user -d nexus_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  # Neo4j - Graph database for relationship analysis
+  neo4j:
+    image: neo4j:5.15.0
+    container_name: nexus-neo4j
+    restart: unless-stopped
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-nexuspassword}
+      - NEO4J_dbms_memory_heap_initial__size=512M
+      - NEO4J_dbms_memory_heap_max__size=2G
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+      - neo4j-conf:/conf
+      - ./docker/data/neo4j/import:/import
+    networks:
+      - data-network
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7474"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  
+  # Redis - In-memory cache for performance
+  redis:
+    image: redis:7.2.4
+    container_name: nexus-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - data-network
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  # MinIO - Object storage for unstructured data
+  minio:
+    image: minio/minio:RELEASE.2023-05-04T21-44-30Z
+    container_name: nexus-minio
+    restart: unless-stopped
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-nexusminio}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-nexuspassword}
+    volumes:
+      - minio-data:/data
+    networks:
+      - data-network
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server --console-address ":9001" /data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  
+  #########################################
+  # Communication Services
+  #########################################
+  
+  # RabbitMQ - Message broker for async communication
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: nexus-rabbitmq
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-nexuspassword}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - backend-network
+    ports:
+      - "5672:5672"  # AMQP
+      - "15672:15672"  # Management UI
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  
+  #########################################
+  # Monitoring Services
+  #########################################
+  
+  # Prometheus - Metrics collection
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    container_name: nexus-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./config/prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    networks:
+      - monitoring-network
+    ports:
+      - "9090:9090"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  
+  # Grafana - Metrics visualization
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: nexus-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-nexuspassword}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - monitoring-network
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  
+  # Alertmanager - Alert routing
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: nexus-alertmanager
+    restart: unless-stopped
+    volumes:
+      - ./config/alertmanager:/etc/alertmanager
+    networks:
+      - monitoring-network
+    ports:
+      - "9093:9093"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+#########################################
+# Networks
+#########################################
+
+networks:
+  ingress-network:
+    driver: bridge
+    name: nexus-ingress
+  backend-network:
+    driver: bridge
+    name: nexus-backend
+  data-network:
+    driver: bridge
+    name: nexus-data
+  monitoring-network:
+    driver: bridge
+    name: nexus-monitoring
+
+#########################################
+# Volumes
+#########################################
+
+volumes:
+  postgres-data:
+  neo4j-data:
+  neo4j-logs:
+  neo4j-conf:
+  redis-data:
+  minio-data:
+  rabbitmq-data:
+  prometheus-data:
+  grafana-data:
