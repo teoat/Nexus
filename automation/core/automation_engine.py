@@ -25,7 +25,7 @@ import statistics
 
 # Import core components (will be implemented next)
 from .worker_manager import WorkerManager
-from .task_manager import TaskManager
+from .task_manager import TaskManager, TaskType, TaskPriority
 from .config_manager import ConfigManager
 
 # Setup logging
@@ -116,6 +116,9 @@ class AutomationEngine:
             self.task_manager = TaskManager(self.config_manager)
             await self.task_manager.initialize()
             logger.info("✅ Task manager initialized")
+
+            # Set task_manager in worker_manager
+            self.worker_manager.set_task_manager(self.task_manager)
             
             # Set system state
             self.state = SystemState.RUNNING
@@ -313,7 +316,7 @@ class AutomationEngine:
             # Assign tasks to workers
             for task in pending_tasks[:len(available_workers)]:
                 worker = available_workers.pop(0)
-                success = await self.worker_manager.assign_task(worker.id, task.id)
+                success = await self.worker_manager.assign_task(worker.id, task)
                 
                 if success:
                     await self.task_manager.start_task(task.id, worker.id)
@@ -428,12 +431,37 @@ class AutomationEngine:
 # Main entry point for testing
 async def main():
     """Main entry point for testing the automation engine"""
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     engine = AutomationEngine()
     
     try:
-        await engine.run()
-    except KeyboardInterrupt:
-        logger.info("Received keyboard interrupt, shutting down...")
+        await engine.initialize()
+
+        # Create a test task
+        task_id = await engine.task_manager.create_task(
+            title="Test Task from Engine",
+            description="A test task created and executed via the automation engine.",
+            task_type=TaskType.GENERAL,
+            priority=TaskPriority.HIGH
+        )
+        logger.info(f"Created test task with ID: {task_id}")
+
+        # Let the engine run for a bit to process the task
+        logger.info("Engine running for 10 seconds to process task...")
+        await asyncio.sleep(10)
+
+        # Check the status of the task
+        task_status = await engine.task_manager.get_task_status(task_id)
+        logger.info(f"Final status of task {task_id}: {task_status['status']}")
+
+        # Get final system status
+        system_status = await engine.get_system_status()
+        logger.info(f"Final system status: Uptime {system_status['uptime_seconds']}s, "
+                    f"Tasks processed: {system_status['metrics']['total_tasks_processed']}")
+
+    except Exception as e:
+        logger.error(f"An error occurred during engine test: {e}", exc_info=True)
+    finally:
         await engine.shutdown()
 
 if __name__ == "__main__":

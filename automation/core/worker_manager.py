@@ -19,6 +19,19 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 import statistics
 
+from automation.workers.base_worker import BaseWorker, Task
+from automation.workers.general_worker import GeneralWorker
+from automation.workers.workflow_worker import WorkflowWorker
+from automation.workers.ml_worker import MLWorker
+from automation.workers.frontend_worker import FrontendWorker
+from automation.workers.backend_worker import BackendWorker
+from automation.workers.monitoring_worker import MonitoringWorker
+from automation.workers.data_worker import DataWorker
+from automation.workers.security_worker import SecurityWorker
+from automation.workers.integration_worker import IntegrationWorker
+from automation.workers.testing_worker import TestingWorker
+
+
 logger = logging.getLogger(__name__)
 
 class WorkerState(Enum):
@@ -35,11 +48,11 @@ class WorkerType(Enum):
     """Worker type classifications"""
     GENERAL = "general"
     WORKFLOW = "workflow"
-    ML = "machine_learning"
+    ML = "ml"
     FRONTEND = "frontend"
     BACKEND = "backend"
     MONITORING = "monitoring"
-    DATA = "data_processing"
+    DATA = "data"
     SECURITY = "security"
     INTEGRATION = "integration"
     TESTING = "testing"
@@ -93,12 +106,14 @@ class WorkerManager:
     - Performance optimization and load balancing
     """
     
-    def __init__(self, config_manager):
+    def __init__(self, config_manager, task_manager=None):
         """Initialize the worker manager"""
         self.config_manager = config_manager
+        self.task_manager = task_manager
         
         # Worker storage
         self._workers: Dict[str, Worker] = {}
+        self._worker_instances: Dict[str, BaseWorker] = {}
         self._worker_types: Dict[WorkerType, List[str]] = {wt: [] for wt in WorkerType}
         self._available_workers: List[str] = []
         self._busy_workers: List[str] = []
@@ -226,9 +241,32 @@ class WorkerManager:
                 state=WorkerState.INITIALIZING,
                 created_at=datetime.now()
             )
+
+            # Map worker type to worker class
+            worker_class_map = {
+                WorkerType.GENERAL: GeneralWorker,
+                WorkerType.WORKFLOW: WorkflowWorker,
+                WorkerType.ML: MLWorker,
+                WorkerType.FRONTEND: FrontendWorker,
+                WorkerType.BACKEND: BackendWorker,
+                WorkerType.MONITORING: MonitoringWorker,
+                WorkerType.DATA: DataWorker,
+                WorkerType.SECURITY: SecurityWorker,
+                WorkerType.INTEGRATION: IntegrationWorker,
+                WorkerType.TESTING: TestingWorker,
+            }
+
+            worker_class = worker_class_map.get(worker_type)
+            if not worker_class:
+                logger.error(f"Unknown worker type: {worker_type}")
+                return None
+
+            # Create worker instance
+            worker_instance = worker_class(worker_id=worker_id)
             
             # Add to storage
             self._workers[worker_id] = worker
+            self._worker_instances[worker_id] = worker_instance
             self._worker_types[worker_type].append(worker_id)
             
             logger.info(f"✅ Worker created: {name} ({worker_id})")
@@ -251,6 +289,10 @@ class WorkerManager:
                 logger.warning(f"Worker {worker_id} is already running")
                 return True
             
+            # Start the worker instance
+            worker_instance = self._worker_instances[worker_id]
+            await worker_instance.start()
+
             # Update worker state
             worker.state = WorkerState.IDLE
             worker.last_heartbeat = datetime.now()
@@ -279,6 +321,10 @@ class WorkerManager:
                 logger.warning(f"Worker {worker_id} is already stopped")
                 return True
             
+            # Stop the worker instance
+            worker_instance = self._worker_instances[worker_id]
+            await worker_instance.stop()
+
             # Update worker state
             worker.state = WorkerState.SHUTTING_DOWN
             
@@ -296,6 +342,10 @@ class WorkerManager:
             # Set final state
             worker.state = WorkerState.OFFLINE
             
+            # Remove from instances
+            if worker_id in self._worker_instances:
+                del self._worker_instances[worker_id]
+
             logger.info(f"✅ Worker stopped: {worker.name} ({worker_id})")
             return True
             
@@ -303,7 +353,10 @@ class WorkerManager:
             logger.error(f"Error stopping worker {worker_id}: {e}")
             return False
     
-    async def assign_task(self, worker_id: str, task_id: str) -> bool:
+    def set_task_manager(self, task_manager):
+        self.task_manager = task_manager
+
+    async def assign_task(self, worker_id: str, task: Task) -> bool:
         """Assign a task to a worker"""
         try:
             if worker_id not in self._workers:
@@ -325,8 +378,8 @@ class WorkerManager:
                 return False
             
             # Assign task
-            worker.current_task_id = task_id
-            worker.assigned_tasks.append(task_id)
+            worker.current_task_id = task.id
+            worker.assigned_tasks.append(task.id)
             worker.state = WorkerState.WORKING
             worker.last_heartbeat = datetime.now()
             
@@ -335,13 +388,38 @@ class WorkerManager:
                 self._available_workers.remove(worker_id)
             if worker_id not in self._busy_workers:
                 self._busy_workers.append(worker_id)
+
+            # Run the task in the background
+            asyncio.create_task(self._run_and_complete_task(worker_id, task))
             
-            logger.debug(f"✅ Task {task_id} assigned to worker {worker_id}")
+            logger.debug(f"✅ Task {task.id} assigned to worker {worker_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Error assigning task {task_id} to worker {worker_id}: {e}")
+            logger.error(f"Error assigning task {task.id} to worker {worker_id}: {e}")
             return False
+
+    async def _run_and_complete_task(self, worker_id: str, task: Task):
+        """Helper function to run a task and handle its completion."""
+        try:
+            worker_instance = self._worker_instances[worker_id]
+            result = await worker_instance.run_task(task)
+
+            # Mark task as complete in TaskManager
+            if self.task_manager:
+                await self.task_manager.complete_task(task.id, success=True)
+
+            # Mark task as complete in WorkerManager
+            await self.complete_task(worker_id, task.id, success=True)
+
+        except Exception as e:
+            logger.error(f"Task {task.id} failed on worker {worker_id}: {e}", exc_info=True)
+            # Mark task as failed in TaskManager
+            if self.task_manager:
+                await self.task_manager.complete_task(task.id, success=False, error_message=str(e))
+
+            # Mark task as failed in WorkerManager
+            await self.complete_task(worker_id, task.id, success=False)
     
     async def complete_task(self, worker_id: str, task_id: str, success: bool = True) -> bool:
         """Mark a task as completed by a worker"""
@@ -630,6 +708,7 @@ class WorkerManager:
         """Background performance optimization loop"""
         while not self._shutdown_event.is_set():
             try:
+                await self.optimize_scaling()
                 await asyncio.sleep(60)  # Check every minute
             except asyncio.CancelledError:
                 break
@@ -642,15 +721,36 @@ class WorkerManager:
         try:
             current_time = datetime.now()
             
-            for worker_id, worker in self._workers.items():
+            for worker_id, worker in list(self._workers.items()):
+                if worker.state in [WorkerState.OFFLINE, WorkerState.SHUTTING_DOWN]:
+                    continue
+
+                worker_instance = self._worker_instances.get(worker_id)
+                if not worker_instance:
+                    logger.warning(f"Worker instance for {worker_id} not found. Marking as offline.")
+                    worker.state = WorkerState.OFFLINE
+                    continue
+
+                # Get heartbeat from the worker instance
+                heartbeat_data = worker_instance.heartbeat()
+                worker.last_heartbeat = datetime.fromtimestamp(heartbeat_data['timestamp'])
+
                 # Check worker timeout
-                if (worker.last_heartbeat and 
-                    (current_time - worker.last_heartbeat).total_seconds() > self._worker_timeout):
+                if (current_time - worker.last_heartbeat).total_seconds() > self._worker_timeout:
                     logger.warning(f"Worker {worker_id} timed out, marking as offline")
                     worker.state = WorkerState.OFFLINE
                     worker.health_score = 0.0
                     continue
                 
+                # Update state based on heartbeat
+                if heartbeat_data['is_busy']:
+                    if worker.state == WorkerState.IDLE:
+                         worker.state = WorkerState.WORKING
+                else:
+                    if worker.state == WorkerState.WORKING:
+                        worker.state = WorkerState.IDLE
+
+
                 # Update health score based on recent performance
                 if worker.metrics.total_tasks_processed > 0:
                     success_rate = worker.metrics.successful_tasks / worker.metrics.total_tasks_processed
@@ -728,7 +828,7 @@ async def main():
             return config.get(key, default)
     
     config_manager = MockConfigManager()
-    worker_manager = WorkerManager(config_manager)
+    worker_manager = WorkerManager(config_manager, None)
     
     try:
         await worker_manager.initialize()

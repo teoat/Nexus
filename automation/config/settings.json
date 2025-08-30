@@ -22,6 +22,7 @@
   "worker": {
     "max_workers": 100,
     "min_workers": 5,
+    "default_type": "general",
     "worker_timeout": 1800,
     "health_check_interval": 60,
     "auto_scaling": true,
