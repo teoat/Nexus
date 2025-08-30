@@ -209,6 +209,7 @@ class TaskManager:
             
             # Add to storage
             self._tasks[task_id] = task
+            logger.info(f"Task {task_id} created. Current tasks: {list(self._tasks.keys())}")
             self._tasks_by_type[task_type].append(task_id)
             self._tasks_by_priority[priority].append(task_id)
             self._tasks_by_status[TaskStatus.PENDING].append(task_id)

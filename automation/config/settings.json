@@ -26,7 +26,8 @@
     "health_check_interval": 60,
     "auto_scaling": true,
     "scaling_threshold": 0.8,
-    "scaling_cooldown": 300
+    "scaling_cooldown": 300,
+    "default_type": "general"
   },
   "task": {
     "max_concurrent_tasks": 50,
