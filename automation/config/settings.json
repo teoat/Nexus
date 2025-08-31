@@ -22,11 +22,14 @@
   "worker": {
     "max_workers": 100,
     "min_workers": 5,
+    "default_type": "general",
+    "load_balancing_strategy": "round_robin",
     "worker_timeout": 1800,
     "health_check_interval": 60,
     "auto_scaling": true,
     "scaling_threshold": 0.8,
-    "scaling_cooldown": 300
+    "scaling_cooldown": 300,
+    "default_type": "general"
   },
   "task": {
     "max_concurrent_tasks": 50,
