@@ -101,7 +101,6 @@ class ReconciliationAgent:
     - Managing reconciliation workflows
     """
 
-
     def __init__(self, config: Dict[str, Any]):
         """Initialize the ReconciliationAgent.Initialize the ReconciliationAgent."""
         self.config = config
@@ -619,6 +618,7 @@ class ReconciliationAgent:
                 else 0
             ),
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ from .agent_coordinator import AgentCoordinator
 from .multi_agent_orchestrator import MultiAgentOrchestrator
 from .workflow_orchestrator import WorkflowOrchestrator
 
+
 class OrchestrationMode(Enum):
     """Orchestration modes for the platform."""
 
@@ -27,6 +28,7 @@ class OrchestrationMode(Enum):
     SEMI_AUTOMATED = "semi_automated"  # Semi-automated with human oversight
     MANUAL = "manual"  # Manual orchestration
     HYBRID = "hybrid"  # Hybrid approach
+
 
 class SystemStatus(Enum):
     """Overall system status."""
@@ -37,6 +39,7 @@ class SystemStatus(Enum):
     DEGRADED = "degraded"  # System performance degraded
     ERROR = "error"  # System has errors
     STOPPING = "stopping"  # System is shutting down
+
 
 @dataclass
 class OrchestrationConfig:
@@ -53,6 +56,7 @@ class OrchestrationConfig:
     performance_update_interval: int
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class SystemMetrics:
     """System-wide performance metrics."""
@@ -67,6 +71,7 @@ class SystemMetrics:
     system_uptime: float
     performance_score: float
     last_updated: datetime
+
 
 class OrchestrationManager:
     """
@@ -653,6 +658,7 @@ class OrchestrationManager:
         except Exception as e:
             self.logger.error(f"Error getting error log: {e}")
             return []
+
 
 # Example usage and testing
 if __name__ == "__main__":

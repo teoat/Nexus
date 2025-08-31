@@ -19,6 +19,7 @@ from collections import defaultdict
 
 from ..taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class NLPModelType(Enum):
     """Types of NLP models."""
 
@@ -31,6 +32,7 @@ class NLPModelType(Enum):
     TRANSLATION = "translation"  # Language translation
     CUSTOM = "custom"  # Custom NLP model
 
+
 class ProcessingLevel(Enum):
     """Levels of NLP processing."""
 
@@ -38,6 +40,7 @@ class ProcessingLevel(Enum):
     INTERMEDIATE = "intermediate"  # Intermediate analysis
     ADVANCED = "advanced"  # Advanced NLP features
     EXPERT = "expert"  # Expert-level analysis
+
 
 class TextType(Enum):
     """Types of text content."""
@@ -51,6 +54,7 @@ class TextType(Enum):
     LOG_FILE = "log_file"  # System logs
     UNKNOWN = "unknown"  # Unknown text type
 
+
 @dataclass
 class TextDocument:
     """A text document for NLP processing."""
@@ -63,6 +67,7 @@ class TextDocument:
     metadata: Dict[str, Any] = field(default_factory=dict)
     language: str = "en"
     encoding: str = "utf-8"
+
 
 @dataclass
 class NLPResult:
@@ -78,6 +83,7 @@ class NLPResult:
     timestamp: datetime
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class NamedEntity:
     """A named entity found in text."""
@@ -89,6 +95,7 @@ class NamedEntity:
     start_position: int
     end_position: int
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class SentimentResult:
@@ -103,6 +110,7 @@ class SentimentResult:
     confidence: float
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class TopicResult:
     """Result of topic modeling."""
@@ -114,6 +122,7 @@ class TopicResult:
     confidence: float
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class NLPProcessorMetrics:
     """Metrics for NLP processing performance."""
@@ -123,6 +132,7 @@ class NLPProcessorMetrics:
     average_processing_time: float
     success_rate: float
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 class NLPProcessor:
     """
@@ -996,6 +1006,7 @@ class NLPProcessor:
                 average_processing_time=0.0,
                 success_rate=0.0,
             )
+
 
 # Example usage and testing
 if __name__ == "__main__":

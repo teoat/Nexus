@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 
 from ..taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class ExplanationType(Enum):
     """Types of AI explanations."""
 
@@ -28,6 +29,7 @@ class ExplanationType(Enum):
     DECISION_TREE = "decision_tree"  # Decision tree path
     RULE_BASED = "rule_based"  # Rule-based explanation
 
+
 class ConfidenceLevel(Enum):
     """Confidence levels for explanations."""
 
@@ -35,6 +37,7 @@ class ConfidenceLevel(Enum):
     MEDIUM = "medium"  # Medium confidence (60-79%)
     LOW = "low"  # Low confidence (40-59%)
     UNCERTAIN = "uncertain"  # Uncertain (<40%)
+
 
 class RiskFactor(Enum):
     """Risk factors for scoring."""
@@ -46,6 +49,7 @@ class RiskFactor(Enum):
     EXTERNAL = "external"  # External risk factors
     INTERNAL = "internal"  # Internal risk factors
 
+
 @dataclass
 class ExplanationFeature:
     """A feature used in AI explanation."""
@@ -56,6 +60,7 @@ class ExplanationFeature:
     contribution: float
     direction: str  # positive/negative/neutral
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class AIExplanation:
@@ -69,6 +74,7 @@ class AIExplanation:
     reasoning: str
     timestamp: datetime
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class RiskScore:
@@ -84,6 +90,7 @@ class RiskScore:
     timestamp: datetime
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class ExplainabilityMetrics:
     """Metrics for explainability performance."""
@@ -93,6 +100,7 @@ class ExplainabilityMetrics:
     explanation_accuracy: float
     user_satisfaction: float
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 class ExplainableAIScorer:
     """
@@ -649,6 +657,7 @@ class ExplainableAIScorer:
                 "min_confidence_threshold": self.min_confidence_threshold,
             },
         )
+
 
 # Example usage and testing
 if __name__ == "__main__":

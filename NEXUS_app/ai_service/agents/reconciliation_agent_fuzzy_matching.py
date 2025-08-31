@@ -309,7 +309,9 @@ class ReconciliationAgentFuzzyMatching:
             desc2_clean = self._clean_description(desc2)
 
             # Sequence matcher similarity
-            seq_similarity = jellyfish.SequenceMatcher(None, desc1_clean, desc2_clean).ratio()
+            seq_similarity = jellyfish.SequenceMatcher(
+                None, desc1_clean, desc2_clean
+            ).ratio()
 
             # Jaro-Winkler similarity
             jaro_similarity = jellyfish.jaro_winkler_similarity(
@@ -602,6 +604,7 @@ class ReconciliationAgentFuzzyMatching:
             "last_updated": datetime.now().isoformat(),
         }
 
+
 async def main():
     """Main function to test Reconciliation Agent Fuzzy Matching"""
     logging.basicConfig(level=logging.INFO)
@@ -661,6 +664,7 @@ async def main():
     except Exception as e:
         print(f"❌ Error: {e}")
         logger.error(f"Error in main: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

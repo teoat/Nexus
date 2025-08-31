@@ -12,7 +12,7 @@ This script tests:
 
 import asyncio
 import time
-from agents.frenly_meta_agent import FrenlyMetaAgent, AgentStatus
+from .agents.frenly_meta_agent import FrenlyMetaAgent
 
 def test_agent_health_monitoring():
     """Test the first 5 todo items from Phase 1."""

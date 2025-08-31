@@ -13,9 +13,9 @@ This script tests:
 import time
 import json
 from pathlib import Path
-from agents.frenly_meta_agent import FrenlyMetaAgent, AppCommand
+from .agents.frenly_meta_agent import FrenlyMetaAgent, AppCommand
 
-def test_state_saving_and_loading():
+async def test_state_saving_and_loading():
     """Test the next 5 todo items from Phase 2."""
     print("🧪 Testing Frenly State Saving & Loading (Phase 2, Items 6-10)")
     print("=" * 70)
@@ -29,14 +29,14 @@ def test_state_saving_and_loading():
     
     # Change some modes to create interesting state
     print("   🔄 Changing app mode to 'construction'...")
-    response = frenly.manage_app(AppCommand(
+    response = await frenly.manage_app(AppCommand(
         command_type="switch_app_mode",
         target_mode="construction"
     ))
     print(f"   📊 Response: {response.message}")
     
     print("   🔄 Changing AI mode to 'extreme'...")
-    response = frenly.manage_app(AppCommand(
+    response = await frenly.manage_app(AppCommand(
         command_type="change_ai_mode",
         target_ai_mode="extreme"
     ))

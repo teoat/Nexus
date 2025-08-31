@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional, Union, Tuple
 
 # from ..taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class CoordinationType(Enum):
     """Types of agent coordination."""
 
@@ -25,6 +26,7 @@ class CoordinationType(Enum):
     PIPELINE = "pipeline"  # Pipeline coordination
     BROADCAST = "broadcast"  # Broadcast coordination
     HIERARCHICAL = "hierarchical"  # Hierarchical coordination
+
 
 class InteractionType(Enum):
     """Types of agent interactions."""
@@ -35,6 +37,7 @@ class InteractionType(Enum):
     CONFLICT_RESOLUTION = "conflict_resolution"  # Resolve conflicts between agents
     COLLABORATIVE_ANALYSIS = "collaborative_analysis"  # Collaborative analysis
 
+
 class AgentRole(Enum):
     """Roles that agents can play in coordination."""
 
@@ -43,6 +46,7 @@ class AgentRole(Enum):
     VALIDATOR = "validator"  # Result validator
     ANALYZER = "analyzer"  # Data analyzer
     REPORTER = "reporter"  # Result reporter
+
 
 @dataclass
 class AgentInteraction:
@@ -56,6 +60,7 @@ class AgentInteraction:
     timestamp: datetime
     status: str
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class CoordinationSession:
@@ -71,6 +76,7 @@ class CoordinationSession:
     end_time: Optional[datetime] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class AgentCapability:
     """Capability information for an agent."""
@@ -82,6 +88,7 @@ class AgentCapability:
     availability: float
     trust_score: float
     last_updated: datetime
+
 
 class AgentCoordinator:
     """
@@ -535,6 +542,7 @@ class AgentCoordinator:
                 ]
             ),
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

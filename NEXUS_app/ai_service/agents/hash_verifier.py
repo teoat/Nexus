@@ -735,6 +735,7 @@ class HashVerifier:
             "parallel_processing_enabled": self.enable_parallel_processing,
         }
 
+
 # Example usage and testing
 if __name__ == "__main__":
     # Configuration

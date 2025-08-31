@@ -90,5 +90,6 @@ def main():
         print(f"❌ Error: {e}")
         return 1
 
+
 if __name__ == "__main__":
     sys.exit(main())

@@ -16,6 +16,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class FileMetadata:
     """File metadata information"""
@@ -253,6 +254,7 @@ class EvidenceProcessor:
             "system_info": {"platform": os.name, "current_directory": os.getcwd()},
         }
 
+
 def main():
     """Test the evidence processorTest the evidence processor"""
     print("🧪 Testing Fixed Evidence Agent Processing Pipeline")
@@ -306,6 +308,7 @@ def main():
         print(f"\n🧹 Cleaned up test file: {test_file}")
 
     print("\n✅ Evidence Agent test completed!")
+
 
 if __name__ == "__main__":
     main()

@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional, Union
 
 # from ..taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class MessageType(Enum):
     """Types of inter-agent messages."""
 
@@ -31,6 +32,7 @@ class MessageType(Enum):
     HEARTBEAT = "heartbeat"  # Health check message
     BROADCAST = "broadcast"  # Broadcast message
 
+
 class MessagePriority(Enum):
     """Message priority levels."""
 
@@ -39,6 +41,7 @@ class MessagePriority(Enum):
     HIGH = "high"  # High priority
     CRITICAL = "critical"  # Critical priority
     EMERGENCY = "emergency"  # Emergency priority
+
 
 class MessageStatus(Enum):
     """Message delivery status."""
@@ -49,6 +52,7 @@ class MessageStatus(Enum):
     READ = "read"  # Message read
     FAILED = "failed"  # Message delivery failed
     EXPIRED = "expired"  # Message expired
+
 
 @dataclass
 class AgentMessage:
@@ -66,6 +70,7 @@ class AgentMessage:
     status: MessageStatus = MessageStatus.PENDING
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class MessageQueue:
     """Message queue for an agent."""
@@ -75,6 +80,7 @@ class MessageQueue:
     outgoing_queue: deque
     priority_queues: Dict[MessagePriority, deque]
     last_processed: datetime
+
 
 @dataclass
 class CommunicationChannel:
@@ -88,6 +94,7 @@ class CommunicationChannel:
     created_at: datetime
     last_activity: datetime
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 class AgentCommunication:
     """
@@ -669,6 +676,7 @@ class AgentCommunication:
             "total_messages": len(self.messages),
             "message_types_supported": [msg_type.value for msg_type in MessageType],
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

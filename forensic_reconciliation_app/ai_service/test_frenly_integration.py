@@ -10,7 +10,7 @@ import os
 # Add the current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from agents.frenly_meta_agent import FrenlyMetaAgent, AppCommand, AppMode, AIMode, ThinkingPerspective
+from .agents.frenly_meta_agent import FrenlyMetaAgent, AppCommand
 
 
 def test_frenly_basic_functionality():

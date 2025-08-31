@@ -11,6 +11,7 @@ import statistics
 from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch, AsyncMock
 
+
 class TestLoadTesting:
     """Test system performance under load."""
 
@@ -111,6 +112,7 @@ class TestLoadTesting:
         # Clean up
         del large_data
 
+
 class TestStressTesting:
     """Test system behavior under stress conditions."""
 
@@ -126,8 +128,12 @@ class TestStressTesting:
             try:
                 # Simulate potential failure with deterministic pattern
                 request_counter += 1
-                if request_counter % 3 != 0:  # Fail on 1st and 2nd request, succeed on 3rd
-                    raise Exception(f"Simulated stress failure on request {request_counter}")
+                if (
+                    request_counter % 3 != 0
+                ):  # Fail on 1st and 2nd request, succeed on 3rd
+                    raise Exception(
+                        f"Simulated stress failure on request {request_counter}"
+                    )
                 return "success"
             except Exception as e:
                 errors.append(str(e))
@@ -190,6 +196,7 @@ class TestStressTesting:
         print(f"  Stress duration: {stress_duration}s")
         print(f"  Recovery duration: {recovery_duration}s")
         print(f"  Avg operation time after recovery: {avg_operation_time:.3f}s")
+
 
 class TestScalability:
     """Test system scalability characteristics."""
@@ -268,6 +275,7 @@ class TestScalability:
         print(f"Concurrency Test Results:")
         for i, concurrency in enumerate(concurrency_levels):
             print(f"  {concurrency} workers: {throughput_results[i]:.1f} items/sec")
+
 
 if __name__ == "__main__":
     # Run tests

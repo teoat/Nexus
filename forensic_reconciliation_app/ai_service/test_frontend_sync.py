@@ -14,31 +14,31 @@ import asyncio
 import json
 import time
 from pathlib import Path
-from agents.frenly_meta_agent import FrenlyMetaAgent, AppCommand
+from .agents.frenly_meta_agent import FrenlyMetaAgent, AppCommand
 
-def test_frontend_sync():
+async def test_frontend_sync():
     """Test the next 5 todo items from Phase 4."""
     print("🧪 Testing Frenly Frontend Sync & WebSocket (Phase 4, Items 16-20)")
     print("=" * 70)
-    
+
     # Initialize Frenly
     print("\n1️⃣ Initializing Frenly Meta Agent...")
     frenly = FrenlyMetaAgent()
-    
+
     # Test 16: Add WebSocket support (simulated)
     print("\n2️⃣ Testing WebSocket support simulation...")
-    
+
     # Create mock WebSocket message handlers
     print("   🔌 Testing WebSocket message handling...")
-    
+
     # Test ping message
     ping_message = {"type": "ping"}
     print(f"      📤 Ping message: {ping_message}")
-    
+
     # Test state request message
     state_request = {"type": "request_state"}
     print(f"      📤 State request: {state_request}")
-    
+
     # Test mode change message
     mode_change = {
         "type": "mode_change",
@@ -47,29 +47,29 @@ def test_frontend_sync():
         "thinking_perspective": "investigation"
     }
     print(f"      📤 Mode change: {mode_change}")
-    
+
     # Test 17: Real-time state updates
     print("\n3️⃣ Testing real-time state updates...")
-    
+
     # Simulate state changes
     print("   🔄 Simulating state changes...")
-    
+
     changes = [
         ("switch_app_mode", "regular"),
         ("change_ai_mode", "guided"),
         ("change_thinking_perspective", "litigation")
     ]
-    
+
     for change_type, target in changes:
         print(f"      🔄 {change_type}: {target}")
-        response = frenly.manage_app(AppCommand(
+        response = await frenly.manage_app(AppCommand(
             command_type=change_type,
             target_mode=target if change_type == "switch_app_mode" else None,
             target_ai_mode=target if change_type == "change_ai_mode" else None,
             target_perspective=target if change_type == "change_thinking_perspective" else None
         ))
         print(f"         📊 Response: {response.message}")
-        
+
         # Simulate WebSocket broadcast
         current_state = {
             "type": "frenly_state",
@@ -85,19 +85,19 @@ def test_frontend_sync():
             "agent_status": frenly.get_all_agent_status(),
             "recent_events": frenly.get_recent_events(limit=5)
         }
-        
+
         print(f"         📡 WebSocket broadcast: {current_state['context']['app_mode']} mode, {current_state['context']['ai_mode']} AI")
-        time.sleep(0.1)
-    
+        await asyncio.sleep(0.1)
+
     # Test 18: Frontend state display
     print("\n4️⃣ Testing frontend state display...")
-    
+
     # Get current state for frontend
     current_context = frenly.app_context
     system_health = frenly.get_overall_system_health()
     agent_status = frenly.get_all_agent_status()
     recent_events = frenly.get_recent_events(limit=10)
-    
+
     print("   📊 Current state for frontend:")
     print(f"      🏷️  App Mode: {current_context.app_mode.value}")
     print(f"      🏷️  AI Mode: {current_context.ai_mode.value}")
@@ -107,42 +107,42 @@ def test_frontend_sync():
     print(f"      🏥 System Health: {system_health['overall_status']} ({system_health['health_score']}%)")
     print(f"      🤖 Agents: {len(agent_status)} registered")
     print(f"      📝 Events: {len(recent_events)} recent")
-    
+
     # Test 19: Mode change from frontend
     print("\n5️⃣ Testing mode change from frontend...")
-    
+
     # Simulate frontend mode change requests
     frontend_requests = [
         {"type": "mode_change", "app_mode": "accounting"},
         {"type": "mode_change", "ai_mode": "eco"},
         {"type": "mode_change", "thinking_perspective": "investigation"}
     ]
-    
+
     for request in frontend_requests:
         print(f"   📤 Frontend request: {request}")
-        
+
         # Process the request
         if "app_mode" in request:
-            response = frenly.manage_app(AppCommand(
+            response = await frenly.manage_app(AppCommand(
                 command_type="switch_app_mode",
                 target_mode=request["app_mode"]
             ))
             print(f"      📊 App mode change: {response.message}")
-        
+
         elif "ai_mode" in request:
-            response = frenly.manage_app(AppCommand(
+            response = await frenly.manage_app(AppCommand(
                 command_type="change_ai_mode",
                 target_ai_mode=request["ai_mode"]
             ))
             print(f"      📊 AI mode change: {response.message}")
-        
+
         elif "thinking_perspective" in request:
-            response = frenly.manage_app(AppCommand(
+            response = await frenly.manage_app(AppCommand(
                 command_type="change_thinking_perspective",
                 target_perspective=request["thinking_perspective"]
             ))
             print(f"      📊 Thinking change: {response.message}")
-        
+
         # Simulate WebSocket state update
         updated_state = {
             "type": "frenly_state",

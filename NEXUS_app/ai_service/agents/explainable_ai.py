@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 
 from ...taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class ExplanationType(Enum):
     """Types of AI explanations."""
 
@@ -51,6 +52,7 @@ class ExplanationLevel(Enum):
     TECHNICAL = "technical"  # Technical details
     EXPERT = "expert"  # Expert-level analysis
 
+
 @dataclass
 class AIExplanation:
     """AI decision explanation."""
@@ -68,6 +70,7 @@ class AIExplanation:
         if not self.timestamp:
             self.timestamp = datetime.utcnow()
 
+
 @dataclass
 class ExplanationConfig:
     """Configuration for AI explanations."""
@@ -84,6 +87,7 @@ class ExplanationConfig:
         """__post_init__ function."""
         if not self.explanation_types:
             self.explanation_types = [ExplanationType.FEATURE_IMPORTANCE]
+
 
 class ExplainableAI:
     """
@@ -1233,6 +1237,7 @@ class ExplainableAI:
                 "rule_explanation",
             ],
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

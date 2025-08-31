@@ -20,6 +20,7 @@ import numpy as np
 
 from ...taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class FuzzyAlgorithm(Enum):
     """Fuzzy matching algorithm types."""
 
@@ -31,6 +32,7 @@ class FuzzyAlgorithm(Enum):
     SEMANTIC = "semantic"
     HYBRID = "hybrid"
 
+
 class MatchQuality(Enum):
     """Match quality levels."""
 
@@ -39,6 +41,7 @@ class MatchQuality(Enum):
     GOOD = "good"  # 80-89% confidence
     FAIR = "fair"  # 70-79% confidence
     POOR = "poor"  # Below 70% confidence
+
 
 @dataclass
 class FuzzyMatchResult:
@@ -59,6 +62,7 @@ class FuzzyMatchResult:
         """__post_init__ function."""
         if not self.timestamp:
             self.timestamp = datetime.utcnow()
+
 
 @dataclass
 class MatchingFeature:
@@ -84,6 +88,7 @@ class MatchingFeature:
             return str(self.value)
         else:
             return str(self.value).lower().strip()
+
 
 class AIFuzzyMatcher:
     """
@@ -822,6 +827,7 @@ class AIFuzzyMatcher:
                 "semantic": self.enable_semantic,
             },
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

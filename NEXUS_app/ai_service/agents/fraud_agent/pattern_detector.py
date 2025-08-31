@@ -150,6 +150,7 @@ class PatternDetector:
         logger.info(f"{alerts_generated} high-risk alerts generated.")
         return alerts_generated
 
+
 # Example usage:
 if __name__ == "__main__":
     # Mock database connection

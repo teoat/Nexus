@@ -2,9 +2,11 @@ import datetime
 import os
 
 def apply_retention_policy(path: str, days: int) -> int:
+    """
     Applies a data retention policy to a directory.
     Deletes files older than the specified number of days.
     Returns the number of files deleted.
+    """
     deleted_files_count = 0
     now = datetime.datetime.now()
     for filename in os.listdir(path):

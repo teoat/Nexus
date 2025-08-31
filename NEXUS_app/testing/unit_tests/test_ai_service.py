@@ -28,6 +28,7 @@ from main import (
     HealthResponse,
 )
 
+
 class TestReconciliationModels:
     """Test reconciliation request/response models."""
 
@@ -71,6 +72,7 @@ class TestReconciliationModels:
         assert response.unmatched_target == unmatched_target
         assert response.processing_time == processing_time
 
+
 class TestFraudDetectionModels:
     """Test fraud detection request/response models."""
 
@@ -112,6 +114,7 @@ class TestFraudDetectionModels:
         assert response.risk_factors == risk_factors
         assert response.processing_time == processing_time
 
+
 class TestNLPModels:
     """Test NLP request/response models."""
 
@@ -149,6 +152,7 @@ class TestNLPModels:
         assert response.summary == summary
         assert response.processing_time == processing_time
 
+
 class TestOCRModels:
     """Test OCR request/response models."""
 
@@ -185,6 +189,7 @@ class TestOCRModels:
         assert response.metadata == metadata
         assert response.processing_time == processing_time
 
+
 class TestHealthResponse:
     """Test health response model."""
 
@@ -194,13 +199,14 @@ class TestHealthResponse:
             status="healthy",
             service="ai_service",
             version="1.0.0",
-            timestamp="2025-08-24T14:35:51.064832"
+            timestamp="2025-08-24T14:35:51.064832",
         )
 
         assert response.status == "healthy"
         assert response.service == "ai_service"
         assert response.version == "1.0.0"
         assert response.timestamp == "2025-08-24T14:35:51.064832"
+
 
 class TestDataValidation:
     """Test data validation for all models."""
@@ -247,6 +253,7 @@ class TestDataValidation:
         assert valid_request.language == "en"  # Default value
         assert valid_request.document_type == "pdf"
 
+
 class TestModelSerialization:
     """Test model serialization and deserialization."""
 
@@ -289,6 +296,7 @@ class TestModelSerialization:
         response_json = response.model_dump_json()
         assert isinstance(response_json, str)
         assert "fraud_scores" in response_json
+
 
 if __name__ == "__main__":
     # Run tests

@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 
 # from ..taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class WorkflowStatus(Enum):
     """Workflow execution status."""
 
@@ -28,6 +29,7 @@ class WorkflowStatus(Enum):
     CANCELLED = "cancelled"  # Workflow was cancelled
     TIMEOUT = "timeout"  # Workflow timed out
 
+
 class WorkflowType(Enum):
     """Types of forensic workflows."""
 
@@ -38,6 +40,7 @@ class WorkflowType(Enum):
     EVIDENCE_ANALYSIS = "evidence_analysis"  # Evidence analysis workflow
     RISK_ASSESSMENT = "risk_assessment"  # Risk assessment workflow
 
+
 class StepStatus(Enum):
     """Individual step execution status."""
 
@@ -47,6 +50,7 @@ class StepStatus(Enum):
     FAILED = "failed"  # Step failed
     SKIPPED = "skipped"  # Step was skipped
     CANCELLED = "cancelled"  # Step was cancelled
+
 
 @dataclass
 class WorkflowStep:
@@ -64,6 +68,7 @@ class WorkflowStep:
     max_retries: int
     priority: int
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class WorkflowExecution:
@@ -84,6 +89,7 @@ class WorkflowExecution:
     end_time: Optional[datetime] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class StepExecution:
     """Execution of a workflow step."""
@@ -98,6 +104,7 @@ class StepExecution:
     error: Optional[str] = None
     retry_count: int = 0
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 class WorkflowOrchestrator:
     """
@@ -606,6 +613,7 @@ class WorkflowOrchestrator:
             "completed_workflows": len(self.completed_workflows),
             "total_workflows": len(self.workflows),
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 def main():
     print("=== RESETTING TODO STATUS ===")
 
@@ -32,6 +33,7 @@ def main():
         print(f"  Status: {todo['status']}")
         print(f"  Implementation: {todo['implementation_status']}")
         print()
+
 
 if __name__ == "__main__":
     main()

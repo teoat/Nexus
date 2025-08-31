@@ -13,23 +13,23 @@ This script tests:
 import time
 import json
 from pathlib import Path
-from agents.frenly_meta_agent import FrenlyMetaAgent, AppCommand
+from .agents.frenly_meta_agent import FrenlyMetaAgent, AppCommand
 
-def test_service_communication():
+async def test_service_communication():
     """Test the next 5 todo items from Phase 3."""
     print("🧪 Testing Frenly Service Communication & Event Logging (Phase 3, Items 11-15)")
     print("=" * 70)
-    
+
     # Initialize Frenly
     print("\n1️⃣ Initializing Frenly Meta Agent...")
     frenly = FrenlyMetaAgent()
-    
+
     # Test 11: Create simple event log
     print("\n2️⃣ Testing event logging system...")
-    
+
     # Make some mode changes to generate events
     print("   🔄 Making mode changes to generate events...")
-    
+
     changes = [
         ("switch_app_mode", "construction"),
         ("change_ai_mode", "extreme"),
@@ -37,10 +37,10 @@ def test_service_communication():
         ("change_dashboard_view", "fraud_analysis"),
         ("change_user_role", "investigator")
     ]
-    
+
     for change_type, target in changes:
         print(f"      🔄 {change_type}: {target}")
-        response = frenly.manage_app(AppCommand(
+        response = await frenly.manage_app(AppCommand(
             command_type=change_type,
             target_mode=target if change_type == "switch_app_mode" else None,
             target_ai_mode=target if change_type == "change_ai_mode" else None,

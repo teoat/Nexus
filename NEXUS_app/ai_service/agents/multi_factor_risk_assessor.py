@@ -1028,6 +1028,7 @@ class MultiFactorRiskAssessor:
             ],
         }
 
+
 # Example usage and testing
 if __name__ == "__main__":
     # Configuration

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 def main():
     print("=== PENDING TODO STATUS ===")
 
@@ -16,6 +17,7 @@ def main():
         print(f"  Duration: {todo['estimated_duration']}")
         print(f"  Subtasks: {todo.get('subtask_count', 0)}")
         print()
+
 
 if __name__ == "__main__":
     main()

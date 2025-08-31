@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 
 # from ..taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class OrchestrationMode(Enum):
     """Orchestration modes for multi-agent coordination."""
 
@@ -25,6 +26,7 @@ class OrchestrationMode(Enum):
     PIPELINE = "pipeline"  # Pipeline execution
     HIERARCHICAL = "hierarchical"  # Hierarchical execution
     ADAPTIVE = "adaptive"  # Adaptive execution
+
 
 class AgentStatus(Enum):
     """Agent status in the orchestration system."""
@@ -35,6 +37,7 @@ class AgentStatus(Enum):
     ERROR = "error"  # Agent has error
     MAINTENANCE = "maintenance"  # Agent in maintenance
 
+
 class WorkflowType(Enum):
     """Types of workflows that can be orchestrated."""
 
@@ -44,6 +47,7 @@ class WorkflowType(Enum):
     EVIDENCE_PROCESSING = "evidence_processing"  # Evidence processing workflow
     COMPLIANCE_CHECK = "compliance_check"  # Compliance checking workflow
     INVESTIGATION = "investigation"  # Investigation workflow
+
 
 @dataclass
 class AgentInfo:
@@ -60,6 +64,7 @@ class AgentInfo:
     last_heartbeat: datetime = field(default_factory=datetime.utcnow)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class WorkflowStep:
     """A step in a multi-agent workflow."""
@@ -72,6 +77,7 @@ class WorkflowStep:
     estimated_duration: float
     priority: int
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class WorkflowExecution:
@@ -87,6 +93,7 @@ class WorkflowExecution:
     agents_assigned: Dict[str, str]
     progress: float
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 class MultiAgentOrchestrator:
     """
@@ -524,6 +531,7 @@ class MultiAgentOrchestrator:
                 [a for a in self.agents.values() if a.status == AgentStatus.IDLE]
             ),
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

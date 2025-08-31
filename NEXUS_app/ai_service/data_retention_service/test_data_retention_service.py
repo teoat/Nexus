@@ -5,6 +5,7 @@ from .main import app
 
 client = TestClient(app)
 
+
 def test_apply_retention():
     test_dir = "test_retention_dir"
     os.makedirs(test_dir, exist_ok=True)
