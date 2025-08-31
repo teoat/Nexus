@@ -20,7 +20,7 @@ from typing import Any, Dict, Optional
 # or a message queue interface in a real distributed system. For now, we'll
 # assume a direct object reference for simplicity.
 # from automation.core.worker_manager import WorkerManager
-from automation.core.worker_defs import WorkerState, WorkerType
+from automation.core.worker_defs import WorkerState, WorkerType, WorkerMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +44,7 @@ class BaseWorker(ABC):
         self.worker_manager = worker_manager
         self.task_manager = task_manager
         self.state = WorkerState.INITIALIZING
+        self.metrics = WorkerMetrics()
         self.current_task_id: Optional[str] = None
         self._shutdown = asyncio.Event()
         self._main_task: Optional[asyncio.Task] = None
@@ -116,6 +117,7 @@ class BaseWorker(ABC):
         """A wrapper around the abstract execute_task method to handle common logic."""
         success = False
         error_message = None
+        start_time = datetime.now()
         try:
             logger.info(f"[{self.name}] Executing task {task_id}...")
             # This is where the specialized worker logic is called
@@ -127,11 +129,26 @@ class BaseWorker(ABC):
             error_message = str(e)
             success = False
         finally:
+            duration = (datetime.now() - start_time).total_seconds()
+            self._update_metrics(success, duration)
             # Notify the manager that the task is complete
             await self.worker_manager.complete_task(self.worker_id, task_id, success=success, error_message=error_message)
             await self.task_manager.complete_task(task_id, success=success, error_message=error_message)
             self.current_task_id = None
             self.state = WorkerState.IDLE
+
+    def _update_metrics(self, success: bool, duration: float):
+        """Update the worker's internal metrics."""
+        self.metrics.total_tasks_processed += 1
+        if success:
+            self.metrics.successful_tasks += 1
+        else:
+            self.metrics.failed_tasks += 1
+
+        # Update average task duration using a weighted average
+        total = self.metrics.total_tasks_processed
+        self.metrics.average_task_duration = ((total - 1) * self.metrics.average_task_duration + duration) / total
+        self.metrics.last_task_time = datetime.now()
 
 
     @abstractmethod
@@ -143,13 +160,9 @@ class BaseWorker(ABC):
 
     async def _send_heartbeat(self):
         """Sends a heartbeat to the WorkerManager to indicate health."""
-        # In a real system, this would be an update to a shared resource (e.g., Redis)
-        # or an RPC call.
         self.last_heartbeat = datetime.now()
-        # This is a simplification. The worker manager will check this.
-        # In a real system the worker would push its heartbeat.
         if hasattr(self.worker_manager, 'receive_heartbeat'):
-             await self.worker_manager.receive_heartbeat(self.worker_id, self.state)
+             await self.worker_manager.receive_heartbeat(self.worker_id, self.state, self.metrics)
         logger.debug(f"[{self.name}] Heartbeat sent.")
 
     def assign_task(self, task_id: str):
