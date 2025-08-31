@@ -27,6 +27,7 @@ import statistics
 from .worker_manager import WorkerManager
 from .task_manager import TaskManager, TaskType, TaskPriority
 from .config_manager import ConfigManager
+from .monitoring.alert_manager import AlertManager, AlertLevel
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -64,6 +65,7 @@ class AutomationEngine:
         self.config_manager = None
         self.worker_manager = None
         self.task_manager = None
+        self.alert_manager = None
         
         # System metrics
         self.system_metrics = {
@@ -112,8 +114,16 @@ class AutomationEngine:
             await self.worker_manager.initialize()
             logger.info("✅ Worker manager initialized")
             
+            # Initialize alert manager
+            self.alert_manager = AlertManager(self.config_manager.get("monitoring", {}))
+            logger.info("✅ Alert manager initialized")
+
+            # Initialize alert manager
+            self.alert_manager = AlertManager(self.config_manager.get("monitoring", {}))
+            logger.info("✅ Alert manager initialized")
+
             # Initialize task manager
-            self.task_manager = TaskManager(self.config_manager)
+            self.task_manager = TaskManager(self.config_manager, self.alert_manager)
             await self.task_manager.initialize()
             logger.info("✅ Task manager initialized")
 
@@ -232,9 +242,19 @@ class AutomationEngine:
             if overall_health < 0.5:
                 self.state = SystemState.ERROR
                 logger.error(f"❌ System health critical: {overall_health}")
+                await self.alert_manager.send_alert(
+                    AlertLevel.CRITICAL,
+                    "System Health Critical",
+                    f"System health is critical with a score of {overall_health:.2f}"
+                )
             elif overall_health < 0.8:
                 self.state = SystemState.MAINTENANCE
                 logger.warning(f"⚠️ System health degraded: {overall_health}")
+                await self.alert_manager.send_alert(
+                    AlertLevel.WARNING,
+                    "System Health Degraded",
+                    f"System health is degraded with a score of {overall_health:.2f}"
+                )
             else:
                 if self.state != SystemState.RUNNING:
                     self.state = SystemState.RUNNING
@@ -307,26 +327,41 @@ class AutomationEngine:
             if not pending_tasks:
                 return
             
-            # Get available workers
-            available_workers = await self.worker_manager.get_available_workers()
-            
-            if not available_workers:
-                return
-            
             # Assign tasks to workers
-            for task in pending_tasks[:len(available_workers)]:
-                worker = available_workers.pop(0)
-                success = await self.worker_manager.assign_task(worker.id, task)
+            for task in pending_tasks:
+                available_workers = await self.worker_manager.get_available_workers()
+                if not available_workers:
+                    break # No more workers
+
+                # Find best worker for the task
+                best_worker = self._find_best_worker_for_task(task, available_workers)
+                if not best_worker:
+                    continue # No suitable worker found for this task
+
+                success = await self.worker_manager.assign_task(best_worker.id, task)
                 
                 if success:
-                    await self.task_manager.start_task(task.id, worker.id)
-                    logger.debug(f"Assigned task {task.id} to worker {worker.id}")
-                else:
-                    # Put worker back in available list
-                    available_workers.append(worker)
+                    await self.task_manager.start_task(task.id, best_worker.id)
+                    logger.debug(f"Assigned task {task.id} to worker {best_worker.id}")
             
         except Exception as e:
             logger.error(f"Error processing pending tasks: {e}")
+
+    def _find_best_worker_for_task(self, task, workers):
+        """Finds the best worker for a given task from a list of available workers."""
+        # Simple strategy: prefer workers with higher performance score and lower resource usage for complex tasks.
+
+        # Filter out workers with high resource usage for complex tasks
+        if task.complexity > 3:
+            workers = [w for w in workers if w.metrics.cpu_usage < 80.0]
+
+        if not workers:
+            return None
+
+        # Sort workers by performance score in descending order
+        sorted_workers = sorted(workers, key=lambda w: w.performance_score, reverse=True)
+
+        return sorted_workers[0]
     
     async def _calculate_performance_score(self) -> float:
         """Calculate overall system performance score"""
@@ -400,6 +435,8 @@ class AutomationEngine:
         if self.task_manager:
             await self.task_manager.shutdown()
         
+        # No shutdown needed for alert_manager as it has no persistent connections
+
         if self.config_manager:
             await self.config_manager.shutdown()
         
@@ -437,22 +474,24 @@ async def main():
     try:
         await engine.initialize()
 
-        # Create a test task
-        task_id = await engine.task_manager.create_task(
-            title="Test Task from Engine",
-            description="A test task created and executed via the automation engine.",
-            task_type=TaskType.GENERAL,
-            priority=TaskPriority.HIGH
+        # Create tasks with different complexities
+        task_general_id = await engine.task_manager.create_task(
+            title="General Task", description="A simple general task", task_type=TaskType.GENERAL
         )
-        logger.info(f"Created test task with ID: {task_id}")
+        task_ml_id = await engine.task_manager.create_task(
+            title="ML Task", description="A complex ML task", task_type=TaskType.ML
+        )
 
-        # Let the engine run for a bit to process the task
-        logger.info("Engine running for 10 seconds to process task...")
-        await asyncio.sleep(10)
+        logger.info(f"Created tasks: General={task_general_id}, ML={task_ml_id}")
 
-        # Check the status of the task
-        task_status = await engine.task_manager.get_task_status(task_id)
-        logger.info(f"Final status of task {task_id}: {task_status['status']}")
+        # Let the engine run for a bit to process the tasks
+        logger.info("Engine running for 20 seconds to process tasks...")
+        await asyncio.sleep(20)
+
+        # Check the status of the tasks
+        for task_id in [task_general_id, task_ml_id]:
+            task_status = await engine.task_manager.get_task_status(task_id)
+            logger.info(f"Final status of task {task_id}: {task_status['status']}")
 
         # Get final system status
         system_status = await engine.get_system_status()

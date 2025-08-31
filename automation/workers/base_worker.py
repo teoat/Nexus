@@ -2,6 +2,8 @@ import asyncio
 import logging
 import time
 import uuid
+import psutil
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
@@ -40,10 +42,13 @@ class BaseWorker(ABC):
 
     def heartbeat(self) -> Dict[str, Any]:
         """Provides a health check for the worker."""
+        process = psutil.Process(os.getpid())
         return {
             "worker_id": self.worker_id,
             "name": self.name,
             "is_busy": self._current_task is not None and not self._current_task.done(),
+            "cpu_usage": process.cpu_percent(interval=0.1),
+            "memory_usage": process.memory_info().rss / 1024 / 1024,  # in MB
             "timestamp": time.time(),
         }
 

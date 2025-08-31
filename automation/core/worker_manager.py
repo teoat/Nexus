@@ -76,6 +76,8 @@ class WorkerMetrics:
     average_task_duration: float = 0.0
     last_task_time: Optional[datetime] = None
     uptime_seconds: int = 0
+    cpu_usage: float = 0.0
+    memory_usage: float = 0.0
     last_updated: Optional[datetime] = None
 
 @dataclass
@@ -117,6 +119,7 @@ class WorkerManager:
         self._worker_types: Dict[WorkerType, List[str]] = {wt: [] for wt in WorkerType}
         self._available_workers: List[str] = []
         self._busy_workers: List[str] = []
+        self._round_robin_index: int = 0
         
         # Performance tracking
         self._performance_history: List[float] = []
@@ -166,6 +169,7 @@ class WorkerManager:
             self._auto_scaling = self.config_manager.get("worker.auto_scaling", True)
             self._scaling_threshold = self.config_manager.get("worker.scaling_threshold", 0.8)
             self._scaling_cooldown = self.config_manager.get("worker.scaling_cooldown", 300)
+            self._load_balancing_strategy = self.config_manager.get("worker.load_balancing_strategy", "round_robin")
             
             logger.debug("Worker configuration loaded")
             
@@ -475,6 +479,23 @@ class WorkerManager:
                     available_workers.append(worker)
         
         return available_workers
+
+    async def get_next_available_worker(self) -> Optional[Worker]:
+        """Get the next available worker based on the load balancing strategy."""
+        available_workers = await self.get_available_workers()
+        if not available_workers:
+            return None
+
+        if self._load_balancing_strategy == "least_connections":
+            return min(available_workers, key=lambda w: len(w.assigned_tasks))
+
+        # Default to round_robin
+        if self._round_robin_index >= len(available_workers):
+            self._round_robin_index = 0
+
+        worker = available_workers[self._round_robin_index]
+        self._round_robin_index += 1
+        return worker
     
     async def get_worker_status(self, worker_id: str) -> Optional[Dict[str, Any]]:
         """Get detailed status of a specific worker"""
@@ -734,6 +755,8 @@ class WorkerManager:
                 # Get heartbeat from the worker instance
                 heartbeat_data = worker_instance.heartbeat()
                 worker.last_heartbeat = datetime.fromtimestamp(heartbeat_data['timestamp'])
+                worker.metrics.cpu_usage = heartbeat_data.get('cpu_usage', 0.0)
+                worker.metrics.memory_usage = heartbeat_data.get('memory_usage', 0.0)
 
                 # Check worker timeout
                 if (current_time - worker.last_heartbeat).total_seconds() > self._worker_timeout:

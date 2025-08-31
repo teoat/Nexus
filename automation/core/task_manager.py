@@ -81,6 +81,7 @@ class Task:
     task_type: TaskType
     priority: TaskPriority
     status: TaskStatus
+    complexity: int = 1 # Default complexity
     dependencies: List[TaskDependency] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
     metrics: TaskMetrics = field(default_factory=TaskMetrics)
@@ -100,9 +101,10 @@ class TaskManager:
     - Performance optimization and load balancing
     """
     
-    def __init__(self, config_manager):
+    def __init__(self, config_manager, alert_manager=None):
         """Initialize the task manager"""
         self.config_manager = config_manager
+        self.alert_manager = alert_manager
         
         # Task storage
         self._tasks: Dict[str, Task] = {}
@@ -174,6 +176,22 @@ class TaskManager:
             logger.warning(f"Error loading task configuration: {e}")
             logger.info("Using default task configuration")
     
+    def _assess_complexity(self, task_type: TaskType, metadata: Dict[str, Any]) -> int:
+        """Assess the complexity of a task."""
+        complexity_map = {
+            TaskType.ML: 5,
+            TaskType.DATA: 4,
+            TaskType.WORKFLOW: 3,
+            TaskType.BACKEND: 2,
+            TaskType.INTEGRATION: 2,
+            TaskType.FRONTEND: 2,
+            TaskType.SECURITY: 3,
+            TaskType.MONITORING: 1,
+            TaskType.TESTING: 1,
+            TaskType.GENERAL: 1,
+        }
+        return complexity_map.get(task_type, 1)
+
     async def create_task(self, title: str, description: str, task_type: TaskType,
                          priority: TaskPriority = TaskPriority.MEDIUM,
                          dependencies: Optional[List[str]] = None,
@@ -192,6 +210,9 @@ class TaskManager:
                         task_dependencies.append(TaskDependency(task_id=dep_id))
                     else:
                         logger.warning(f"Dependency task {dep_id} not found, ignoring")
+
+            # Assess complexity
+            complexity = self._assess_complexity(task_type, metadata or {})
             
             # Create task
             task = Task(
@@ -201,6 +222,7 @@ class TaskManager:
                 task_type=task_type,
                 priority=priority,
                 status=TaskStatus.PENDING,
+                complexity=complexity,
                 dependencies=task_dependencies,
                 metadata=metadata or {},
                 timeout_seconds=timeout_seconds or self._task_timeout,
@@ -374,6 +396,13 @@ class TaskManager:
                     self._tasks_by_status[TaskStatus.FAILED].append(task_id)
                     
                     logger.error(f"❌ Task failed permanently: {task.title} ({task_id})")
+
+                    if self.alert_manager:
+                        await self.alert_manager.send_alert(
+                            "critical",
+                            f"Task Failed Permanently: {task.title}",
+                            f"Task {task.id} failed after {task.max_retries} retries. Error: {error_message}"
+                        )
             
             # Remove from running tasks
             if task_id in self._running_tasks:
@@ -428,6 +457,7 @@ class TaskManager:
             "type": task.task_type.value,
             "priority": task.priority.value,
             "status": task.status.value,
+            "complexity": task.complexity,
             "dependencies": [asdict(dep) for dep in task.dependencies],
             "metadata": task.metadata,
             "metrics": asdict(task.metrics),
@@ -607,10 +637,14 @@ class TaskManager:
     async def _resolve_pending_dependencies(self):
         """Resolve pending dependencies for tasks"""
         try:
-            # This is a simplified implementation
-            # In a real system, you'd have more sophisticated dependency resolution
-            pass
-            
+            for task_id in list(self._pending_tasks):
+                task = self._tasks.get(task_id)
+                if not task:
+                    continue
+
+                if await self._is_task_ready(task):
+                    logger.debug(f"Task {task_id} is now ready to be scheduled.")
+
         except Exception as e:
             logger.error(f"Error resolving pending dependencies: {e}")
     
