@@ -1,177 +1,79 @@
-#!/usr/bin/env python3
-"""
-🤖 BASE WORKER - ABSTRACT BASE CLASS FOR ALL WORKERS 🤖
-
-This module defines the abstract base class for all specialized workers in the
-consolidated automation system. It provides common functionality for worker
-lifecycle, health monitoring, and task execution.
-
-Version: 1.0.0
-Status: Development
-"""
-
 import asyncio
 import logging
+import time
+import uuid
+import psutil
+import os
 from abc import ABC, abstractmethod
-from datetime import datetime
+from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
-# Assuming a way to interact with the WorkerManager, this would likely be an RPC client
-# or a message queue interface in a real distributed system. For now, we'll
-# assume a direct object reference for simplicity.
-# from automation.core.worker_manager import WorkerManager
-from automation.core.worker_defs import WorkerState, WorkerType, WorkerMetrics
+from automation.core.task_manager import Task
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
 class BaseWorker(ABC):
     """
-    Abstract base class for all workers in the automation system.
+    Base worker class with common functionality for all specialized workers.
+    This class is responsible for executing tasks, while the WorkerManager
+    manages its lifecycle and state.
     """
-
-    def __init__(
-        self,
-        worker_id: str,
-        worker_name: str,
-        worker_type: WorkerType,
-        worker_manager,  # This would be a client/stub in a real system
-        task_manager,
-    ):
-        self.worker_id = worker_id
-        self.name = worker_name
-        self.worker_type = worker_type
-        self.worker_manager = worker_manager
-        self.task_manager = task_manager
-        self.state = WorkerState.INITIALIZING
-        self.metrics = WorkerMetrics()
-        self.current_task_id: Optional[str] = None
-        self._shutdown = asyncio.Event()
-        self._main_task: Optional[asyncio.Task] = None
-        self.last_heartbeat: Optional[datetime] = None
-
-        logger.info(f"[{self.name}] Worker initialized with ID: {self.worker_id}")
+    def __init__(self, name: str, worker_id: Optional[str] = None):
+        self.worker_id = worker_id or str(uuid.uuid4())
+        self.name = name
+        self._current_task: Optional[asyncio.Task] = None
 
     async def start(self):
-        """Starts the worker's main loop."""
-        if self.state not in [WorkerState.INITIALIZING, WorkerState.OFFLINE]:
-            logger.warning(f"[{self.name}] Worker is already running or paused.")
-            return
-
-        logger.info(f"[{self.name}] Starting worker...")
-        self.state = WorkerState.IDLE
-        self._shutdown.clear()
-        self._main_task = asyncio.create_task(self.run())
+        """Initializes the worker."""
+        logger.info(f"Worker {self.name} ({self.worker_id}) is ready.")
+        # In a real scenario, this might involve setting up connections or resources.
+        await asyncio.sleep(0.1)
 
     async def stop(self):
-        """Stops the worker gracefully."""
-        logger.info(f"[{self.name}] Stopping worker...")
-        self.state = WorkerState.SHUTTING_DOWN
-        self._shutdown.set()
-        if self._main_task:
-            try:
-                await asyncio.wait_for(self._main_task, timeout=10.0)
-            except asyncio.TimeoutError:
-                logger.warning(f"[{self.name}] Main task did not finish in time. Forcing cancellation.")
-                self._main_task.cancel()
-        self.state = WorkerState.OFFLINE
-        logger.info(f"[{self.name}] Worker stopped.")
+        """Cleans up worker resources."""
+        logger.info(f"Worker {self.name} ({self.worker_id}) is stopping.")
+        if self._current_task and not self._current_task.done():
+            self._current_task.cancel()
+        # In a real scenario, this might involve closing connections.
+        await asyncio.sleep(0.1)
+        logger.info(f"Worker {self.name} ({self.worker_id}) has stopped.")
 
-    async def run(self):
-        """The main execution loop for the worker."""
-        logger.info(f"[{self.name}] Worker run loop started.")
-        while not self._shutdown.is_set():
-            try:
-                if self.state == WorkerState.IDLE:
-                    # In a real system, this would be a long poll or listen on a message queue
-                    # For now, we simulate polling for a task
-                    await asyncio.sleep(2)
-                    # The AutomationEngine will assign a task, changing the state.
-                    # This is a simplification. A real worker would get a task from a queue.
+    def heartbeat(self) -> Dict[str, Any]:
+        """Provides a health check for the worker."""
+        process = psutil.Process(os.getpid())
+        return {
+            "worker_id": self.worker_id,
+            "name": self.name,
+            "is_busy": self._current_task is not None and not self._current_task.done(),
+            "cpu_usage": process.cpu_percent(interval=0.1),
+            "memory_usage": process.memory_info().rss / 1024 / 1024,  # in MB
+            "timestamp": time.time(),
+        }
 
-                elif self.state == WorkerState.WORKING:
-                    if self.current_task_id:
-                        await self.execute_task_wrapper(self.current_task_id)
-                    else:
-                        logger.warning(f"[{self.name}] In WORKING state but no current_task_id.")
-                        self.state = WorkerState.IDLE
-                        await self.worker_manager.complete_task(self.worker_id, self.current_task_id, success=False)
+    async def run_task(self, task: Task) -> Any:
+        """
+        Executes a given task.
+        """
+        if self._current_task and not self._current_task.done():
+            raise RuntimeError(f"Worker {self.name} ({self.worker_id}) is already busy.")
 
-
-                await self._send_heartbeat()
-                await asyncio.sleep(5)  # Main loop sleep
-
-            except asyncio.CancelledError:
-                logger.info(f"[{self.name}] Run loop cancelled.")
-                break
-            except Exception as e:
-                logger.error(f"[{self.name}] Error in run loop: {e}", exc_info=True)
-                self.state = WorkerState.ERROR
-                # Try to recover
-                await asyncio.sleep(10)
-                self.state = WorkerState.IDLE
-
-        logger.info(f"[{self.name}] Worker run loop finished.")
-
-    async def execute_task_wrapper(self, task_id: str):
-        """A wrapper around the abstract execute_task method to handle common logic."""
-        success = False
-        error_message = None
-        start_time = datetime.now()
+        logger.info(f"Worker {self.name} ({self.worker_id}) is starting task {task.id}.")
+        self._current_task = asyncio.create_task(self._execute_task(task))
         try:
-            logger.info(f"[{self.name}] Executing task {task_id}...")
-            # This is where the specialized worker logic is called
-            await self.execute_task(task_id)
-            logger.info(f"[{self.name}] Task {task_id} executed successfully.")
-            success = True
-        except Exception as e:
-            logger.error(f"[{self.name}] Failed to execute task {task_id}: {e}", exc_info=True)
-            error_message = str(e)
-            success = False
+            result = await self._current_task
+            logger.info(f"Worker {self.name} ({self.worker_id}) finished task {task.id}.")
+            return result
+        except asyncio.CancelledError:
+            logger.warning(f"Task {task.id} was cancelled on worker {self.name} ({self.worker_id}).")
+            raise
         finally:
-            duration = (datetime.now() - start_time).total_seconds()
-            self._update_metrics(success, duration)
-            # Notify the manager that the task is complete
-            await self.worker_manager.complete_task(self.worker_id, task_id, success=success, error_message=error_message)
-            await self.task_manager.complete_task(task_id, success=success, error_message=error_message)
-            self.current_task_id = None
-            self.state = WorkerState.IDLE
-
-    def _update_metrics(self, success: bool, duration: float):
-        """Update the worker's internal metrics."""
-        self.metrics.total_tasks_processed += 1
-        if success:
-            self.metrics.successful_tasks += 1
-        else:
-            self.metrics.failed_tasks += 1
-
-        # Update average task duration using a weighted average
-        total = self.metrics.total_tasks_processed
-        self.metrics.average_task_duration = ((total - 1) * self.metrics.average_task_duration + duration) / total
-        self.metrics.last_task_time = datetime.now()
-
+            self._current_task = None
 
     @abstractmethod
-    async def execute_task(self, task_id: str, task_metadata: Dict[str, Any] = None):
+    async def _execute_task(self, task: Task) -> Any:
         """
-        Execute a specific task. This method must be implemented by subclasses.
+        The actual task execution logic, to be implemented by subclasses.
         """
         pass
-
-    async def _send_heartbeat(self):
-        """Sends a heartbeat to the WorkerManager to indicate health."""
-        self.last_heartbeat = datetime.now()
-        if hasattr(self.worker_manager, 'receive_heartbeat'):
-             await self.worker_manager.receive_heartbeat(self.worker_id, self.state, self.metrics)
-        logger.debug(f"[{self.name}] Heartbeat sent.")
-
-    def assign_task(self, task_id: str):
-        """Assigns a task to this worker."""
-        if self.state == WorkerState.IDLE:
-            self.current_task_id = task_id
-            self.state = WorkerState.WORKING
-            logger.info(f"[{self.name}] Assigned task {task_id}.")
-            return True
-        else:
-            logger.warning(f"[{self.name}] Cannot assign task, worker is not IDLE (state: {self.state}).")
-            return False

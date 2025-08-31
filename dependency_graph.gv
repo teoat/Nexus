@@ -1,0 +1,15 @@
+// Task Dependency Graph
+digraph {
+	"c38bd01f-5069-4d7c-a6bd-e2bb97eafdca" [label="Task A
+(c38bd01f)"]
+	"cc3b0145-2909-4d14-8e1e-4f00eca3164e" [label="Task B
+(cc3b0145)"]
+	"15979d78-d587-4dda-b7c6-0ae76ada1d8f" [label="Task C
+(15979d78)"]
+	"2c1faff0-1e02-4881-8832-227eac7e133c" [label="Task D
+(2c1faff0)"]
+	"c38bd01f-5069-4d7c-a6bd-e2bb97eafdca" -> "cc3b0145-2909-4d14-8e1e-4f00eca3164e"
+	"c38bd01f-5069-4d7c-a6bd-e2bb97eafdca" -> "15979d78-d587-4dda-b7c6-0ae76ada1d8f"
+	"cc3b0145-2909-4d14-8e1e-4f00eca3164e" -> "2c1faff0-1e02-4881-8832-227eac7e133c"
+	"15979d78-d587-4dda-b7c6-0ae76ada1d8f" -> "2c1faff0-1e02-4881-8832-227eac7e133c"
+}

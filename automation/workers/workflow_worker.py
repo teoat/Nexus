@@ -1,33 +1,24 @@
-#!/usr/bin/env python3
-"""
-WORKFLOW WORKER
-"""
-
 import asyncio
 import logging
-from typing import Any, Dict
-
-from automation.workers.base_worker import BaseWorker
-from automation.core.worker_defs import WorkerType
+from .base_worker import BaseWorker
+from automation.core.task_manager import Task
+from typing import Any
 
 logger = logging.getLogger(__name__)
-
 
 class WorkflowWorker(BaseWorker):
     """
     A specialized worker for executing workflow automation tasks.
     """
+    def __init__(self, worker_id: str = None):
+        super().__init__(name="WorkflowWorker", worker_id=worker_id)
 
-    def __init__(self, worker_id: str, worker_name: str, worker_manager, task_manager):
-        super().__init__(worker_id, worker_name, WorkerType.WORKFLOW, worker_manager, task_manager)
-        logger.info(f"[{self.name}] WorkflowWorker initialized.")
-
-    async def execute_task(self, task_id: str, task_metadata: Dict[str, Any] = None):
+    async def _execute_task(self, task: Task) -> Any:
         """
-        Executes a workflow task.
-        This is a placeholder implementation.
+        Main logic for the workflow worker.
         """
-        logger.info(f"[{self.name}] Starting workflow task: {task_id}")
-        # Simulate some work
-        await asyncio.sleep(10)
-        logger.info(f"[{self.name}] Completed workflow task: {task_id}")
+        logger.info(f"WorkflowWorker ({self.worker_id}) is executing task {task.id}.")
+        # In a real implementation, this would involve complex workflow logic.
+        await asyncio.sleep(2) # Simulate work
+        logger.info(f"WorkflowWorker ({self.worker_id}) finished task {task.id}.")
+        return {"status": "success", "task_id": task.id}

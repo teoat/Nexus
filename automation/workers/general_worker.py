@@ -1,32 +1,23 @@
-#!/usr/bin/env python3
-"""
-GENERAL WORKER
-"""
-
 import asyncio
 import logging
-from typing import Any, Dict
-
-from automation.workers.base_worker import BaseWorker
-from automation.core.worker_defs import WorkerType
+from .base_worker import BaseWorker
+from automation.core.task_manager import Task
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
 class GeneralWorker(BaseWorker):
     """
-    A general-purpose worker for executing various automation tasks.
+    A general-purpose worker for executing miscellaneous tasks.
     """
+    def __init__(self, worker_id: str = None):
+        super().__init__(name="GeneralWorker", worker_id=worker_id)
 
-    def __init__(self, worker_id: str, worker_name: str, worker_manager, task_manager):
-        super().__init__(worker_id, worker_name, WorkerType.GENERAL, worker_manager, task_manager)
-        logger.info(f"[{self.name}] GeneralWorker initialized.")
-
-    async def execute_task(self, task_id: str, task_metadata: Dict[str, Any] = None):
+    async def _execute_task(self, task: Task) -> Any:
         """
-        Executes a general task.
-        This is a placeholder implementation.
+        Main logic for the general worker.
         """
-        logger.info(f"[{self.name}] Starting general task: {task_id}")
-        await asyncio.sleep(5)
-        logger.info(f"[{self.name}] Completed general task: {task_id}")
+        logger.info(f"GeneralWorker ({self.worker_id}) is executing task {task.id}.")
+        await asyncio.sleep(1)
+        logger.info(f"GeneralWorker ({self.worker_id}) finished task {task.id}.")
+        return {"status": "success", "task_id": task.id}

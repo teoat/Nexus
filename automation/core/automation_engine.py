@@ -29,7 +29,7 @@ from .task_manager import TaskManager, TaskType, TaskPriority
 from .config_manager import ConfigManager
 from automation.tasks.task_scheduler import TaskScheduler
 from automation.tasks.task_executor import TaskExecutor
-
+from automation.monitoring.alert_manager import AlertManager, AlertLevel
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -62,6 +62,7 @@ class AutomationEngine:
         self.task_manager = None
         self.task_scheduler = None
         self.task_executor = None
+        self.alert_manager = None
         
         # System metrics
         self.system_metrics = {
@@ -102,10 +103,16 @@ class AutomationEngine:
             await self.config_manager.initialize()
             logger.info("✅ Configuration manager initialized")
             
-            self.task_manager = TaskManager(self.config_manager)
+            # Initialize alert manager
+            self.alert_manager = AlertManager(self.config_manager.get("monitoring", {}))
+            logger.info("✅ Alert manager initialized")
+            
+            # Initialize task manager
+            self.task_manager = TaskManager(self.config_manager, self.alert_manager)
             await self.task_manager.initialize()
             logger.info("✅ Task manager initialized")
 
+            # Initialize worker manager
             self.worker_manager = WorkerManager(self.config_manager, self.task_manager)
             await self.worker_manager.initialize()
             logger.info("✅ Worker manager initialized")
@@ -208,9 +215,29 @@ class AutomationEngine:
             self.system_metrics["system_health_score"] = overall_health
             self.last_health_check = datetime.now()
             
-            if overall_health < 0.5: self.state = SystemState.ERROR
-            elif overall_health < 0.8: self.state = SystemState.MAINTENANCE
-            else: self.state = SystemState.RUNNING
+            # Update system state based on health
+            if overall_health < 0.5:
+                self.state = SystemState.ERROR
+                logger.error(f"❌ System health critical: {overall_health}")
+                await self.alert_manager.send_alert(
+                    AlertLevel.CRITICAL,
+                    "System Health Critical",
+                    f"System health is critical with a score of {overall_health:.2f}"
+                )
+            elif overall_health < 0.8:
+                self.state = SystemState.MAINTENANCE
+                logger.warning(f"⚠️ System health degraded: {overall_health}")
+                await self.alert_manager.send_alert(
+                    AlertLevel.WARNING,
+                    "System Health Degraded",
+                    f"System health is degraded with a score of {overall_health:.2f}"
+                )
+            else:
+                if self.state != SystemState.RUNNING:
+                    self.state = SystemState.RUNNING
+                    logger.info(f"✅ System health restored: {overall_health}")
+            
+            logger.debug(f"Health check completed. Score: {overall_health}")
             
         except Exception as e:
             logger.error(f"Error during health check: {e}")
@@ -241,9 +268,54 @@ class AutomationEngine:
     async def _process_pending_tasks(self):
         """Process pending tasks using the TaskExecutor."""
         try:
-            await self.task_executor.execute_pending_tasks()
+            # Try using task executor first, fallback to manual assignment
+            try:
+                await self.task_executor.execute_pending_tasks()
+            except Exception as executor_error:
+                logger.warning(f"Task executor failed: {executor_error}, falling back to manual task assignment")
+                
+                # Fallback: manual task assignment
+                pending_tasks = await self.task_manager.get_pending_tasks()
+                
+                if not pending_tasks:
+                    return
+                
+                # Assign tasks to workers
+                for task in pending_tasks:
+                    available_workers = await self.worker_manager.get_available_workers()
+                    if not available_workers:
+                        break # No more workers
+
+                    # Find best worker for the task
+                    best_worker = self._find_best_worker_for_task(task, available_workers)
+                    if not best_worker:
+                        continue # No suitable worker found for this task
+
+                    success = await self.worker_manager.assign_task(best_worker.id, task.id)
+                    
+                    if success:
+                        await self.task_manager.start_task(task.id, best_worker.id)
+                        logger.debug(f"Assigned task {task.id} to worker {best_worker.id}")
+                
         except Exception as e:
-            logger.error(f"Error processing pending tasks: {e}", exc_info=True)
+            logger.error(f"Error processing pending tasks: {e}")
+
+    def _find_best_worker_for_task(self, task, workers):
+        """Finds the best worker for a given task from a list of available workers."""
+        # Simple strategy: prefer workers with higher performance score and lower resource usage for complex tasks.
+
+        # Filter out workers with high resource usage for complex tasks
+        complexity = getattr(task, 'complexity', 1)
+        if complexity > 3:
+            workers = [w for w in workers if getattr(w.metrics, 'cpu_usage', 0) < 80.0]
+
+        if not workers:
+            return None
+
+        # Sort workers by performance score in descending order
+        sorted_workers = sorted(workers, key=lambda w: w.performance_score, reverse=True)
+
+        return sorted_workers[0]
 
     async def schedule_task(self, title: str, description: str, task_type: TaskType,
                          priority: TaskPriority = TaskPriority.MEDIUM,
@@ -253,7 +325,6 @@ class AutomationEngine:
         if self.state not in [SystemState.RUNNING, SystemState.MAINTENANCE]:
             logger.error(f"Cannot schedule task in state {self.state.value}")
             return None
-
         try:
             task_id = await self.task_scheduler.schedule_task(
                 title=title,
@@ -289,9 +360,17 @@ class AutomationEngine:
         if self.background_tasks:
             await asyncio.gather(*self.background_tasks, return_exceptions=True)
         
-        if self.worker_manager: await self.worker_manager.shutdown()
-        if self.task_manager: await self.task_manager.shutdown()
-        if self.config_manager: await self.config_manager.shutdown()
+        # Shutdown components
+        if self.worker_manager:
+            await self.worker_manager.shutdown()
+        
+        if self.task_manager:
+            await self.task_manager.shutdown()
+        
+        # No shutdown needed for alert_manager as it has no persistent connections
+
+        if self.config_manager:
+            await self.config_manager.shutdown()
         
         logger.info("✅ Automation Engine shutdown completed")
     
@@ -311,11 +390,45 @@ class AutomationEngine:
 
 async def main():
     """Main entry point for testing the automation engine"""
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     engine = AutomationEngine()
     try:
-        await engine.run()
+        await engine.initialize()
+
+        # Create tasks with different complexities for testing
+        task_general_id = await engine.task_manager.create_task(
+            title="General Task", description="A simple general task", task_type=TaskType.GENERAL
+        )
+        task_ml_id = await engine.task_manager.create_task(
+            title="ML Task", description="A complex ML task", task_type=TaskType.ML
+        )
+
+        logger.info(f"Created tasks: General={task_general_id}, ML={task_ml_id}")
+
+        # Let the engine run for a bit to process the tasks
+        logger.info("Engine running for 20 seconds to process tasks...")
+        
+        # Run the main engine loop with timeout
+        try:
+            await asyncio.wait_for(engine.run(), timeout=20.0)
+        except asyncio.TimeoutError:
+            logger.info("Test timeout reached, proceeding to status check...")
+
+        # Check the status of the tasks
+        for task_id in [task_general_id, task_ml_id]:
+            task_status = await engine.task_manager.get_task_status(task_id)
+            if task_status:
+                logger.info(f"Final status of task {task_id}: {task_status['status']}")
+
+        # Get final system status
+        system_status = await engine.get_system_status()
+        logger.info(f"Final system status: Uptime {system_status['metrics']['uptime_seconds']}s, "
+                    f"Tasks processed: {system_status['metrics']['total_tasks_processed']}")
+
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt, shutting down...")
+    except Exception as e:
+        logger.error(f"An error occurred during engine test: {e}", exc_info=True)
     finally:
         await engine.shutdown()
 
