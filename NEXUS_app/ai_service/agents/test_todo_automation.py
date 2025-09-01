@@ -11,6 +11,7 @@ from typing import List
 # Import the TODO automation system
 from todo_automation_enhanced import TodoAutomationSystem, TodoItem
 
+
 async def test_basic_functionality():
     """Test basic functionality of the TODO automation system"""
     print("🧪 Testing Basic Functionality")
@@ -83,6 +84,7 @@ async def test_basic_functionality():
     print(f"  - Completed: {stats['completed']}")
     print(f"  - Failed: {stats['failed']}")
 
+
 async def test_priority_processing():
     """Test priority-based processing"""
     print("\n🧪 Testing Priority Processing")
@@ -140,6 +142,7 @@ async def test_priority_processing():
 
     print("\n✅ Priority processing test completed")
 
+
 async def test_error_handling():
     """Test error handling and retry logic"""
     print("\n🧪 Testing Error Handling")
@@ -164,6 +167,7 @@ async def test_error_handling():
     await automation.run_automation()
 
     print("\n✅ Error handling test completed")
+
 
 async def test_concurrent_processing():
     """Test concurrent processing capabilities"""
@@ -197,6 +201,7 @@ async def test_concurrent_processing():
         print(f"  - {len(concurrent_todos)} TODOs processed in {total_time:.2f}s")
         print(f"  - Average time per TODO: {total_time/len(concurrent_todos):.2f}s")
 
+
 async def main():
     """Run all tests"""
     print("🚀 TODO Automation System - Test Suite")
@@ -220,6 +225,7 @@ async def main():
     except Exception as e:
         print(f"\n❌ Test failed with error: {e}")
         raise
+
 
 if __name__ == "__main__":
     # Run the test suite

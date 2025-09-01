@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
+app.config["SECRET_KEY"] = os.environ.get(
+    "SECRET_KEY", "dev-secret-key-change-in-production"
+)
 app.config["API_BASE_URL"] = os.environ.get("API_BASE_URL", "http://localhost:8000")
 
 # Enable CORS
@@ -21,13 +23,16 @@ CORS(app)
 # Initialize SocketIO for real-time updates
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
 if __name__ == "__main__":
     print("Starting Nexus Platform Frontend...")
     socketio.run(app, host="0.0.0.0", port=8001, debug=True, allow_unsafe_werkzeug=True)
+
 
 @app.route("/dashboard/<dashboard_type>")
 def dashboard(dashboard_type):

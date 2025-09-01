@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 
 from ...taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class CircularType(Enum):
     """Types of circular transactions."""
 
@@ -42,6 +43,7 @@ class RiskLevel(Enum):
     MEDIUM = "medium"  # Medium risk
     HIGH = "high"  # High risk
     CRITICAL = "critical"  # Critical risk
+
 
 @dataclass
 class CircularTransaction:
@@ -64,6 +66,7 @@ class CircularTransaction:
         if not self.detection_time:
             self.detection_time = datetime.utcnow()
 
+
 @dataclass
 class TransactionNode:
     """Node in the transaction graph."""
@@ -74,6 +77,7 @@ class TransactionNode:
     transaction_count: int
     risk_score: float
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class TransactionEdge:
@@ -86,6 +90,7 @@ class TransactionEdge:
     transaction_id: str
     risk_indicators: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 class CircularTransactionDetector:
     """
@@ -1214,6 +1219,7 @@ class CircularTransactionDetector:
                 "structuring",
             ],
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

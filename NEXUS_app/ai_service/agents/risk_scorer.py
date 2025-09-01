@@ -112,7 +112,6 @@ class RiskScorer:
     - Assessing risk across multiple dimensions
     """
 
-
     def __init__(self, config: Dict[str, Any]):
         """Initialize the RiskScorer.Initialize the RiskScorer."""
         self.config = config
@@ -1072,6 +1071,7 @@ class RiskScorer:
                 "expert_system",
             ],
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

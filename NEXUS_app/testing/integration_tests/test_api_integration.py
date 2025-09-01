@@ -15,6 +15,7 @@ from datetime import datetime
 TEST_BASE_URL = "http://localhost:8001"
 TEST_TIMEOUT = 30.0
 
+
 class TestAPIIntegration:
     """Test API integration between services."""
 
@@ -200,6 +201,7 @@ class TestAPIIntegration:
         assert "average_response_time" in data
         assert "active_connections" in data
 
+
 class TestServiceCommunication:
     """Test service-to-service communication."""
 
@@ -246,6 +248,7 @@ class TestServiceCommunication:
             # Verify mock was called
             assert mock_rabbitmq.called is False  # Not actually called in this test
 
+
 class TestErrorHandling:
     """Test error handling and edge cases."""
 
@@ -291,6 +294,7 @@ class TestErrorHandling:
         # Should return 401 (Unauthorized) or 403 (Forbidden)
         assert response.status_code in [401, 403]
 
+
 class TestPerformance:
     """Test API performance and response times."""
 
@@ -330,6 +334,7 @@ class TestPerformance:
 
         # All requests should succeed
         assert all(r.status_code == 200 for r in responses)
+
 
 if __name__ == "__main__":
     # Run tests

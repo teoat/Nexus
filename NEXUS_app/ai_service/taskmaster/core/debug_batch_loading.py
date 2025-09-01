@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 def main():
     print("🔍 DEBUGGING BATCH LOADING...")
     print("=" * 50)
@@ -70,6 +71,7 @@ def main():
         print(f"  ❌ Error in scan and mark: {e}")
 
     print("\n✅ Debug completed")
+
 
 if __name__ == "__main__":
     main()

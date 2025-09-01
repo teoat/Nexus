@@ -20,6 +20,7 @@ import exifread
 
 try:
     import pixexif
+
     PIXEXIF_AVAILABLE = True
 except ImportError:
     PIXEXIF_AVAILABLE = False
@@ -40,6 +41,7 @@ except ImportError:
 
 from ..taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class ImageFormat(Enum):
     """Supported image formats."""
 
@@ -53,6 +55,7 @@ class ImageFormat(Enum):
     RAW = "raw"  # RAW format
     UNKNOWN = "unknown"  # Unknown format
 
+
 class MetadataCategory(Enum):
     """Categories of metadata."""
 
@@ -64,6 +67,7 @@ class MetadataCategory(Enum):
     COPYRIGHT = "copyright"  # Copyright information
     CUSTOM = "custom"  # Custom metadata fields
 
+
 class ExtractionStatus(Enum):
     """Status of metadata extraction."""
 
@@ -73,6 +77,7 @@ class ExtractionStatus(Enum):
     FAILED = "failed"  # Extraction failed
     PARTIAL = "partial"  # Partial extraction
     NO_METADATA = "no_metadata"  # No metadata found
+
 
 @dataclass
 class CameraInfo:
@@ -88,6 +93,7 @@ class CameraInfo:
     lens_serial: Optional[str]
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class GPSData:
     """GPS data from EXIF."""
@@ -102,6 +108,7 @@ class GPSData:
     gps_version: Optional[str]
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class TimestampInfo:
     """Timestamp information from EXIF."""
@@ -112,6 +119,7 @@ class TimestampInfo:
     subsec_time: Optional[str]
     timezone_offset: Optional[str]
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class TechnicalData:
@@ -135,6 +143,7 @@ class TechnicalData:
     metering_mode: Optional[str]
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class EditingInfo:
     """Editing information from EXIF."""
@@ -146,6 +155,7 @@ class EditingInfo:
     processing_software: Optional[str]
     edit_history: List[str]
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class EXIFMetadata:
@@ -164,6 +174,7 @@ class EXIFMetadata:
     extraction_time: float
     timestamp: datetime
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 class EXIFExtractor:
     """
@@ -1013,6 +1024,7 @@ class EXIFExtractor:
             "gps_precision": self.gps_precision,
             "advanced_parsing_enabled": self.enable_advanced_parsing,
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

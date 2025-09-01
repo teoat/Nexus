@@ -110,7 +110,6 @@ class PatternDetector:
     - Generating pattern reports and alerts
     """
 
-
     def __init__(self, config: Dict[str, Any]):
         """Initialize the PatternDetector.Initialize the PatternDetector."""
         self.config = config
@@ -1142,6 +1141,7 @@ class PatternDetector:
                 "hybrid",
             ],
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

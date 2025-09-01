@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+
 class ComplianceType(Enum):
     """Types of compliance"""
 
@@ -222,6 +223,7 @@ class ComplianceRuleEngine:
 
         return summary
 
+
 def main():
     """Test the compliance rule engineTest the compliance rule engine"""
     print("🧪 Testing Fixed Compliance Rule Engine")
@@ -256,6 +258,7 @@ def main():
         print(f"  {key}: {value}")
 
     print("\n✅ Compliance Rule Engine test completed!")
+
 
 if __name__ == "__main__":
     main()

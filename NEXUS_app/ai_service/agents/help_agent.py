@@ -18,6 +18,7 @@ from collections import defaultdict
 
 from ..taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class HelpCategory(Enum):
     """Categories of help content."""
 
@@ -31,6 +32,7 @@ class HelpCategory(Enum):
     COMPLIANCE = "compliance"  # Compliance information
     CUSTOM = "custom"  # Custom help content
 
+
 class ContentType(Enum):
     """Types of help content."""
 
@@ -43,6 +45,7 @@ class ContentType(Enum):
     TUTORIAL = "tutorial"  # Step-by-step tutorials
     REFERENCE = "reference"  # Reference material
 
+
 class SearchType(Enum):
     """Types of search operations."""
 
@@ -52,6 +55,7 @@ class SearchType(Enum):
     CATEGORY = "category"  # Category-based search
     TAG = "tag"  # Tag-based search
     CONTEXT = "context"  # Context-aware search
+
 
 @dataclass
 class HelpContent:
@@ -70,6 +74,7 @@ class HelpContent:
     language: str
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class SearchResult:
     """Result of a help search."""
@@ -83,6 +88,7 @@ class SearchResult:
     content_type: ContentType
     tags: List[str]
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class UserQuery:
@@ -98,6 +104,7 @@ class UserQuery:
     user_feedback: Optional[str]
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class InteractiveGuide:
     """An interactive help guide."""
@@ -111,6 +118,7 @@ class InteractiveGuide:
     completion_status: str
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class HelpMetrics:
     """Metrics for help system performance."""
@@ -121,6 +129,7 @@ class HelpMetrics:
     average_response_time: float
     user_satisfaction: float
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 class HelpAgent:
     """
@@ -1068,6 +1077,7 @@ Generate comprehensive reports and export results.
                 average_response_time=0.0,
                 user_satisfaction=0.0,
             )
+
 
 # Example usage and testing
 if __name__ == "__main__":

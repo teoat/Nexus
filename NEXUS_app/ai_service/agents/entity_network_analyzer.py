@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 
 from ..taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class NetworkAnalysisType(Enum):
     """Types of network analysis."""
 
@@ -63,6 +64,7 @@ class RelationshipType(Enum):
     BUSINESS = "business"  # Business relationship
     SUSPICIOUS = "suspicious"  # Suspicious connection
     UNKNOWN = "unknown"  # Unknown relationship
+
 
 @dataclass
 class Entity:
@@ -108,6 +110,7 @@ class Relationship:
         if not self.last_seen:
             self.last_seen = datetime.utcnow()
 
+
 @dataclass
 class NetworkMetrics:
     """Network analysis metrics."""
@@ -135,6 +138,7 @@ class ShellCompanyIndicator:
     confidence: float
     evidence: Dict[str, Any]
     recommendations: List[str]
+
 
 class EntityNetworkAnalyzer:
     """
@@ -1142,6 +1146,7 @@ class EntityNetworkAnalyzer:
                 "relationship_mapping",
             ],
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

@@ -151,8 +151,10 @@ class MCPLogger:
             "total_activities": len(self.agent_activities.get(session_id, [])),
         }
 
+
 class TodoAgent:
     """Base class for TODO processing agents"""
+
     def __init__(self, agent_id: str, capabilities: List[str]):
         self.agent_id = agent_id
         self.capabilities = capabilities
@@ -254,6 +256,7 @@ class TodoAgent:
         # This is a base implementation - subclasses should override
         return f"Processed TODO: {todo.content}"
 
+
 class CodeReviewAgent(TodoAgent):
     """Agent specialized in code review and implementation TODOs"""
 
@@ -287,6 +290,7 @@ class CodeReviewAgent(TodoAgent):
 
         return f"Processed code TODO: {todo.content}"
 
+
 class DocumentationAgent(TodoAgent):
     """Agent specialized in documentation and README TODOs"""
 
@@ -300,6 +304,7 @@ class DocumentationAgent(TodoAgent):
         ):
             return f"Documentation TODO identified: {todo.content}"
         return f"Processed documentation TODO: {todo.content}"
+
 
 class TestingAgent(TodoAgent):
     """Agent specialized in testing and validation TODOs"""
@@ -317,6 +322,7 @@ class TestingAgent(TodoAgent):
             return f"Testing TODO identified: {todo.content}"
         return f"Processed testing TODO: {todo.content}"
 
+
 class InfrastructureAgent(TodoAgent):
     """Agent specialized in infrastructure and deployment TODOs"""
 
@@ -333,6 +339,7 @@ class InfrastructureAgent(TodoAgent):
             return f"Infrastructure TODO identified: {todo.content}"
         return f"Processed infrastructure TODO: {todo.content}"
 
+
 class GeneralAgent(TodoAgent):
     """General purpose agent for miscellaneous TODOs"""
 
@@ -341,6 +348,7 @@ class GeneralAgent(TodoAgent):
 
     async def _execute_todo(self, todo: TodoItem) -> str:
         return f"Processed general TODO: {todo.content}"
+
 
 class TodoAutomationSystem:
     """Main system for parallel TODO processing with continuous loops"""
@@ -655,6 +663,7 @@ class TodoAutomationSystem:
             "stats": self.stats.copy(),
         }
 
+
 async def main():
     """Main function to run the TODO automation"""
     # Initialize the system with 10 concurrent agents
@@ -665,6 +674,7 @@ async def main():
 
     # Run the automation
     await automation.run_automation()
+
 
 if __name__ == "__main__":
     # Run the automation

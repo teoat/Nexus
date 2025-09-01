@@ -7,18 +7,16 @@ while Frenly integrates with the main platform.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 from datetime import datetime
+from ..xai_scorer import XAIScorer
 
 logger = logging.getLogger(__name__)
 
 
 class RiskAgent:
     """
-    Stub risk assessment agent for Frenly integration.
-    
-    This agent provides basic risk assessment functionality
-    while the full integration is being developed.
+    A risk assessment agent that uses an Explainable AI (XAI) scorer.
     """
     
     def __init__(self):
@@ -26,34 +24,47 @@ class RiskAgent:
         self.name = "risk_agent"
         self.status = "active"
         self.last_activity = datetime.now()
-        logger.info("Stub Risk Agent initialized")
+        self.scorer = XAIScorer()
+        logger.info("Risk Agent with XAI Scorer initialized")
     
     async def assess_risk(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Assess risk in the provided data.
+        Assess risk in the provided data using the XAI scorer.
         
         Args:
             data: Data to assess for risk
             
         Returns:
-            Risk assessment result
+            Risk assessment result with explainable factors.
         """
         logger.info(f"Assessing risk in data: {len(data)} items")
         
-        # Stub risk assessment logic
+        score, factors = self.scorer.score(data)
+        risk_level = self._get_risk_level(score)
+
         result = {
             "success": True,
-            "message": "Risk assessment completed (stub implementation)",
+            "message": "Risk assessment completed.",
             "assessed_items": len(data),
-            "risk_score": 0.0,
-            "risk_level": "low",
-            "risk_factors": [],
+            "risk_score": score,
+            "risk_level": risk_level,
+            "risk_factors": factors,
             "timestamp": datetime.now().isoformat(),
             "agent": self.name
         }
         
         self.last_activity = datetime.now()
         return result
+
+    def _get_risk_level(self, score: int) -> str:
+        """Determines the risk level based on a numerical score."""
+        if score > 75:
+            return "critical"
+        if score > 50:
+            return "high"
+        if score > 25:
+            return "medium"
+        return "low"
     
     def get_status(self) -> Dict[str, Any]:
         """Get agent status."""

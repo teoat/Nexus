@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 def main():
     print("🧪 TESTING TODO MASTER READING...")
     print("=" * 40)
@@ -39,6 +40,7 @@ def main():
         print(f"❌ Error with task registry: {e}")
 
     print("\n✅ Test completed!")
+
 
 if __name__ == "__main__":
     main()

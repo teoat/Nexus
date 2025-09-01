@@ -42,6 +42,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 
 from ...taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class EvidenceType(Enum):
     """Types of evidence files."""
 
@@ -55,6 +56,7 @@ class EvidenceType(Enum):
     ARCHIVE = "archive"  # Archive files (ZIP, RAR, etc.)
     UNKNOWN = "unknown"  # Unknown file type
 
+
 class ProcessingStatus(Enum):
     """Status of evidence processing."""
 
@@ -64,6 +66,7 @@ class ProcessingStatus(Enum):
     FAILED = "failed"  # Processing failed
     PARTIAL = "partial"  # Partial processing success
     SKIPPED = "skipped"  # Processing skipped
+
 
 class ProcessingStage(Enum):
     """Stages of evidence processing."""
@@ -77,6 +80,7 @@ class ProcessingStage(Enum):
     NLP_ANALYSIS = "nlp_analysis"  # NLP analysis
     EVIDENCE_STORAGE = "evidence_storage"  # Evidence storage
     COMPLETION = "completion"  # Processing completion
+
 
 @dataclass
 class FileMetadata:
@@ -95,6 +99,7 @@ class FileMetadata:
     hash_sha512: str
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class EXIFData:
     """EXIF metadata from images."""
@@ -109,6 +114,7 @@ class EXIFData:
     color_space: Optional[str]
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class OCRResult:
     """OCR processing result."""
@@ -119,6 +125,7 @@ class OCRResult:
     language_detected: str
     processing_time: float
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class NLPAnalysis:
@@ -132,6 +139,7 @@ class NLPAnalysis:
     sentence_count: int
     named_entities: List[Dict[str, Any]]
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class ProcessingResult:
@@ -149,6 +157,7 @@ class ProcessingResult:
     processing_time: float
     timestamp: datetime
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 class EvidenceProcessor:
     """
@@ -877,6 +886,7 @@ class EvidenceProcessor:
             "supported_formats": self.supported_formats,
             "max_file_size": self.max_file_size,
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

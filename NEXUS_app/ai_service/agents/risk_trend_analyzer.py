@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 
 from ..taskmaster.models.job import Job, JobPriority, JobStatus, JobType
 
+
 class TrendDirection(Enum):
     """Trend direction indicators."""
 
@@ -27,6 +28,7 @@ class TrendDirection(Enum):
     CYCLICAL = "cyclical"  # Risk is cyclical
     UNKNOWN = "unknown"  # Trend unknown
 
+
 class TrendPeriod(Enum):
     """Time periods for trend analysis."""
 
@@ -36,6 +38,7 @@ class TrendPeriod(Enum):
     QUARTERLY = "quarterly"  # Quarterly trends
     YEARLY = "yearly"  # Yearly trends
     CUSTOM = "custom"  # Custom period
+
 
 class AnalysisType(Enum):
     """Types of trend analysis."""
@@ -49,6 +52,7 @@ class AnalysisType(Enum):
     ANOMALY_DETECTION = "anomaly_detection"  # Anomaly detection
     COMPARATIVE_ANALYSIS = "comparative_analysis"  # Comparative analysis
 
+
 @dataclass
 class RiskDataPoint:
     """A single risk data point."""
@@ -59,6 +63,7 @@ class RiskDataPoint:
     risk_factors: Dict[str, float]
     timestamp: datetime
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class TrendAnalysis:
@@ -77,6 +82,7 @@ class TrendAnalysis:
     recommendations: List[str]
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+
 @dataclass
 class TrendPrediction:
     """Risk trend prediction."""
@@ -90,6 +96,7 @@ class TrendPrediction:
     key_factors: List[str]
     uncertainty_level: float
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class TrendReport:
@@ -105,6 +112,7 @@ class TrendReport:
     risk_insights: List[str]
     action_items: List[str]
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 class RiskTrendAnalyzer:
     """
@@ -1140,6 +1148,7 @@ class RiskTrendAnalyzer:
             "total_data_points": sum(len(points) for points in self.risk_data.values()),
             "active_entities": len(self.risk_data),
         }
+
 
 # Example usage and testing
 if __name__ == "__main__":

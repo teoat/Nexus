@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 def main():
     print("=== CURRENT TODO STATUS ===")
     print(f"Total TODOs: {len(task_registry.priority_todos)}")
@@ -17,6 +18,7 @@ def main():
     print("\n=== COMPLETED TODOs ===")
     for todo in completed[:5]:
         print(f"{todo['id']}: {todo['name']} - {todo['implementation_status']}")
+
 
 if __name__ == "__main__":
     main()

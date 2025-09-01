@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 def main():
     print("🔍 CHECKING COLLECTIVE WORKER SYSTEM STATUS...")
     print("=" * 50)
@@ -82,6 +83,7 @@ def main():
         print("  - Check individual worker logs")
 
     return True
+
 
 if __name__ == "__main__":
     main()
