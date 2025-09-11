@@ -1,0 +1,269 @@
+# Nexus Platform - Unified Kubernetes ConfigMap
+# Centralized configuration for all services
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexus-config
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: config
+data:
+  # Application Configuration
+  app.env: "production"
+  app.debug: "false"
+  app.timezone: "UTC"
+  
+  # Database Configuration
+  postgres.host: "nexus-postgres"
+  postgres.port: "5432"
+  postgres.database: "nexus_db"
+  postgres.sslmode: "require"
+  
+  # Redis Configuration
+  redis.host: "nexus-redis"
+  redis.port: "6379"
+  redis.db: "0"
+  
+  # RabbitMQ Configuration
+  rabbitmq.host: "nexus-rabbitmq"
+  rabbitmq.port: "5672"
+  rabbitmq.vhost: "nexus"
+  
+  # Neo4j Configuration
+  neo4j.host: "nexus-neo4j"
+  neo4j.port: "7687"
+  neo4j.protocol: "bolt+s"
+  
+  # MinIO Configuration
+  minio.host: "nexus-minio"
+  minio.port: "9000"
+  minio.secure: "true"
+  
+  # Monitoring Configuration
+  prometheus.host: "nexus-monitoring"
+  prometheus.port: "9090"
+  
+  grafana.host: "nexus-grafana"
+  grafana.port: "3000"
+  
+  # Logging Configuration
+  log.level: "INFO"
+  log.format: "json"
+  
+  # Security Configuration
+  cors.origins: "https://ui.local,https://api.local"
+  rate.limit.requests: "100"
+  rate.limit.window: "60s"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: nginx
+data:
+  nginx.conf: |
+    events {
+        worker_connections 2048;
+        use epoll;
+        multi_accept on;
+    }
+    
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        
+        # Logging
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for" '
+                        'rt=$request_time uct="$upstream_connect_time" '
+                        'uht="$upstream_header_time" urt="$upstream_response_time"';
+        
+        access_log /var/log/nginx/access.log main;
+        error_log /var/log/nginx/error.log warn;
+        
+        # Performance
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        keepalive_requests 1000;
+        client_max_body_size 100M;
+        
+        # Gzip
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_comp_level 6;
+        gzip_types
+            text/plain
+            text/css
+            text/xml
+            text/javascript
+            application/json
+            application/javascript
+            application/xml+rss
+            application/atom+xml
+            image/svg+xml;
+        
+        # Rate limiting
+        limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+        limit_req_zone $binary_remote_addr zone=auth:10m rate=5r/s;
+        
+        # Upstream definitions
+        upstream api_backend {
+            server nexus-api:5000 max_fails=3 fail_timeout=30s;
+            keepalive 32;
+        }
+        
+        upstream auth_backend {
+            server nexus-auth:5001 max_fails=3 fail_timeout=30s;
+            keepalive 32;
+        }
+        
+        upstream ui_backend {
+            server nexus-ui:3000 max_fails=3 fail_timeout=30s;
+            keepalive 32;
+        }
+        
+        upstream sot_backend {
+            server nexus-sot:8000 max_fails=3 fail_timeout=30s;
+            keepalive 32;
+        }
+        
+        # Main server block
+        server {
+            listen 80;
+            server_name _;
+            
+            # Health check endpoint
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+            
+            # API routes
+            location /api/ {
+                limit_req zone=api burst=20 nodelay;
+                proxy_pass http://api_backend/;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_cache_bypass $http_upgrade;
+                proxy_connect_timeout 30s;
+                proxy_send_timeout 30s;
+                proxy_read_timeout 30s;
+            }
+            
+            # Auth routes
+            location /auth/ {
+                limit_req zone=auth burst=10 nodelay;
+                proxy_pass http://auth_backend/;
+                proxy_http_version 1.1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            
+            # SOT routes
+            location /sot/ {
+                proxy_pass http://sot_backend/;
+                proxy_http_version 1.1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            
+            # Frontend routes
+            location / {
+                proxy_pass http://ui_backend/;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_cache_bypass $http_upgrade;
+            }
+        }
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: 'nexus-platform'
+        replica: 'main'
+    
+    rule_files:
+      - "rules/*.yml"
+    
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+              - nexus-alertmanager:9093
+    
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+        scrape_interval: 5s
+      
+      - job_name: 'nexus-api'
+        static_configs:
+          - targets: ['nexus-api:5000']
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+      
+      - job_name: 'nexus-auth'
+        static_configs:
+          - targets: ['nexus-auth:5001']
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+      
+      - job_name: 'nexus-sot'
+        static_configs:
+          - targets: ['nexus-sot:8000']
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+      
+      - job_name: 'nexus-postgres'
+        static_configs:
+          - targets: ['nexus-postgres:9187']
+        scrape_interval: 30s
+      
+      - job_name: 'nexus-redis'
+        static_configs:
+          - targets: ['nexus-redis:6379']
+        scrape_interval: 30s
+      
+      - job_name: 'nexus-rabbitmq'
+        static_configs:
+          - targets: ['nexus-rabbitmq:15692']
+        scrape_interval: 30s

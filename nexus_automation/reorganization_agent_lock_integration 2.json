@@ -1,0 +1,22 @@
+{
+  "integration_type": "reorganization_agent_lock",
+  "created": "2025-09-10T07:45:24.160241",
+  "features": [
+    "Reorganization validation",
+    "Agent lock enforcement",
+    "Unified file management",
+    "Comprehensive monitoring"
+  ],
+  "reorganization_rules": {
+    "validate_before_reorganization": true,
+    "preserve_agent_lock_rules": true,
+    "update_sot_after_reorganization": true,
+    "log_all_changes": true
+  },
+  "agent_lock_rules": {
+    "enforce_during_reorganization": true,
+    "validate_after_reorganization": true,
+    "update_restrictions_after_reorganization": true,
+    "maintain_archive_structure": true
+  }
+}

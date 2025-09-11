@@ -1,0 +1,39 @@
+{
+  "alerts_enabled": true,
+  "channels": {
+    "console": {
+      "enabled": true,
+      "level": "info"
+    },
+    "file": {
+      "enabled": true,
+      "file": "nexus_automation/alerts.log",
+      "level": "warning"
+    },
+    "email": {
+      "enabled": false,
+      "smtp_server": "localhost",
+      "recipients": []
+    }
+  },
+  "rules": [
+    {
+      "name": "high_violation_rate",
+      "condition": "violation_rate > 0.1",
+      "severity": "warning",
+      "message": "High violation rate detected: {violation_rate:.1%}"
+    },
+    {
+      "name": "system_error",
+      "condition": "error_count > 0",
+      "severity": "error",
+      "message": "System error detected: {error_count} errors"
+    },
+    {
+      "name": "archive_size_warning",
+      "condition": "archive_size > 1000000000",
+      "severity": "warning",
+      "message": "Archive size is large: {archive_size} bytes"
+    }
+  ]
+}

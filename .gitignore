@@ -1,0 +1,99 @@
+# NEXUS PLATFORM .GITIGNORE
+
+# Archived folders
+archived/
+archive/
+backup/
+backups/
+backup_before_implementation/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+nexus_env/
+nexus_python_env/
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+.claude/
+.mcp/
+.qodo/
+.taskmaster/
+
+# Logs
+*.log
+logs/
+*.pid
+
+# Environment files
+.env
+*.env
+!*.env.example
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Cache
+.cache/
+.pytest_cache/
+
+# Test files
+test/
+tests/
+simulation/
+simulations/
+
+# Node modules
+node_modules/
+
+# Database
+*.db
+*.sqlite
+
+# Security
+*.pem
+*.key
+*.crt
+encryption_keys/
+
+# Status files
+*_status.json
+*_sync_status.json
+*_events.json
+*_lock.json
+
+# Optimization reports
+optimization_report_*.md
+
+# Large files
+*.bin
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Compressed files
+*.zip
+*.tar.gz
+*.rar
+*.7z

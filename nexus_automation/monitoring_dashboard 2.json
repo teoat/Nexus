@@ -1,0 +1,42 @@
+{
+  "dashboard_name": "NEXUS Agent Lock Dashboard",
+  "version": "1.0.0",
+  "created": "2025-09-10T08:20:13.796429",
+  "widgets": [
+    {
+      "id": "violation_summary",
+      "title": "Violation Summary",
+      "type": "summary",
+      "data_source": "agent_lock_violations"
+    },
+    {
+      "id": "agent_performance",
+      "title": "Agent Performance",
+      "type": "chart",
+      "data_source": "agent_behavior"
+    },
+    {
+      "id": "file_operations",
+      "title": "File Operations",
+      "type": "table",
+      "data_source": "file_operations"
+    },
+    {
+      "id": "system_status",
+      "title": "System Status",
+      "type": "status",
+      "data_source": "system_health"
+    }
+  ],
+  "refresh_interval": 30,
+  "alerts": {
+    "high_violation_rate": {
+      "threshold": 0.1,
+      "message": "High violation rate detected"
+    },
+    "system_error": {
+      "threshold": 1,
+      "message": "System error detected"
+    }
+  }
+}

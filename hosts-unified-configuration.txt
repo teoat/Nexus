@@ -1,0 +1,27 @@
+# Nexus Platform Unified System - Hosts Configuration
+# Add these entries to your hosts file for unified system access
+
+# For macOS/Linux: /etc/hosts
+# For Windows: C:\Windows\System32\drivers\etc\hosts
+
+127.0.0.1 launcher.local
+127.0.0.1 web-launcher.local
+127.0.0.1 nexus.local
+127.0.0.1 api.local
+127.0.0.1 sot.local
+127.0.0.1 automation.local
+127.0.0.1 monitoring.local
+127.0.0.1 grafana.local
+
+# Instructions:
+# 1. Copy the above entries (excluding comments)
+# 2. Add them to your system's hosts file
+# 3. Save the file (may require administrator/sudo privileges)
+# 4. Test by running: ping launcher.local
+
+# Verification commands:
+# macOS/Linux: ping launcher.local
+# Windows: ping launcher.local
+
+# If you get "unknown host" errors, verify the hosts file was saved correctly
+# and that your system is reading from the correct hosts file location.

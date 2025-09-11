@@ -1,0 +1,41 @@
+{
+  "services": {
+    "nexus_app": {
+      "url": "http://localhost:8000",
+      "health_endpoint": "/health",
+      "api_endpoint": "/api"
+    },
+    "postgresql_docker": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "nexus_automation",
+      "user": "nexus_user"
+    },
+    "postgresql_k8s": {
+      "host": "postgresql.nexus-platform.svc.cluster.local",
+      "port": 5432,
+      "database": "nexus_automation",
+      "user": "nexus_user"
+    },
+    "redis_docker": {
+      "host": "localhost",
+      "port": 6379,
+      "password": "redis_password123"
+    },
+    "redis_k8s": {
+      "host": "redis.nexus-platform.svc.cluster.local",
+      "port": 6379,
+      "password": "redis_password123"
+    },
+    "monitoring": {
+      "prometheus": "http://localhost:9090",
+      "grafana": "http://localhost:3000"
+    }
+  },
+  "routing": {
+    "primary_database": "postgresql_docker",
+    "primary_cache": "redis_docker",
+    "fallback_database": "postgresql_k8s",
+    "fallback_cache": "redis_k8s"
+  }
+}

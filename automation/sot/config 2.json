@@ -1,0 +1,9 @@
+{
+  "max_workers": 10,
+  "task_timeout": 300,
+  "retry_attempts": 3,
+  "monitoring_interval": 30,
+  "log_level": "INFO",
+  "consolidated_from": 94,
+  "generated": "2025-09-10T16:37:24.928699"
+}

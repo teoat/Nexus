@@ -1,0 +1,38 @@
+{
+  "metrics_enabled": true,
+  "collection_interval": 60,
+  "retention_days": 30,
+  "metrics": {
+    "file_operations_per_second": {
+      "description": "File operations per second",
+      "type": "counter"
+    },
+    "violation_rate": {
+      "description": "Violation rate percentage",
+      "type": "gauge"
+    },
+    "agent_success_rate": {
+      "description": "Agent success rate",
+      "type": "gauge"
+    },
+    "system_uptime": {
+      "description": "System uptime",
+      "type": "counter"
+    },
+    "archive_size": {
+      "description": "Archive directory size",
+      "type": "gauge"
+    }
+  },
+  "exporters": {
+    "prometheus": {
+      "enabled": true,
+      "port": 9091,
+      "path": "/metrics"
+    },
+    "json": {
+      "enabled": true,
+      "file": "nexus_automation/metrics.json"
+    }
+  }
+}

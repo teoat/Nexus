@@ -1,0 +1,30 @@
+{
+  "enabled": true,
+  "rules": {
+    "duplicate_todos": {
+      "action": "move_to_archive",
+      "target": "archived/agent_violations/duplicate_todos/",
+      "message": "Duplicate todo file detected, moved to archive"
+    },
+    "duplicate_configs": {
+      "action": "move_to_archive",
+      "target": "archived/agent_violations/duplicate_configs/",
+      "message": "Duplicate config file detected, moved to archive"
+    },
+    "duplicate_docs": {
+      "action": "move_to_archive",
+      "target": "archived/agent_violations/duplicate_docs/",
+      "message": "Duplicate documentation file detected, moved to archive"
+    },
+    "duplicate_env": {
+      "action": "move_to_archive",
+      "target": "archived/agent_violations/duplicate_env/",
+      "message": "Duplicate environment file detected, moved to archive"
+    },
+    "duplicate_logs": {
+      "action": "move_to_archive",
+      "target": "archived/agent_violations/duplicate_logs/",
+      "message": "Duplicate log file detected, moved to archive"
+    }
+  }
+}

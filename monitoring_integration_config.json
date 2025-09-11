@@ -1,0 +1,54 @@
+{
+  "prometheus": {
+    "url": "http://localhost:9090",
+    "targets": [
+      {
+        "job": "nexus-app",
+        "targets": [
+          "localhost:8000"
+        ],
+        "metrics_path": "/metrics"
+      },
+      {
+        "job": "docker-services",
+        "targets": [
+          "localhost:5432",
+          "localhost:6379",
+          "localhost:7474"
+        ],
+        "metrics_path": "/metrics"
+      }
+    ]
+  },
+  "grafana": {
+    "url": "http://localhost:3000",
+    "dashboards": [
+      {
+        "name": "Nexus Platform Overview",
+        "panels": [
+          "System Health",
+          "Service Status",
+          "Performance Metrics",
+          "Error Rates"
+        ]
+      }
+    ]
+  },
+  "alerts": [
+    {
+      "name": "Service Down",
+      "condition": "service_health == 'unhealthy'",
+      "severity": "critical"
+    },
+    {
+      "name": "High CPU Usage",
+      "condition": "cpu_usage > 80",
+      "severity": "warning"
+    },
+    {
+      "name": "High Memory Usage",
+      "condition": "memory_usage > 85",
+      "severity": "warning"
+    }
+  ]
+}

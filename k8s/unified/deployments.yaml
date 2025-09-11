@@ -1,0 +1,431 @@
+# Nexus Platform - Unified Kubernetes Deployments
+# Production-ready deployments with proper resource management
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-nginx
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: nginx
+    tier: proxy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nexus-nginx
+  template:
+    metadata:
+      labels:
+        app: nexus-nginx
+        component: nginx
+        tier: proxy
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: nginx-logs
+          mountPath: /var/log/nginx
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+      - name: nginx-logs
+        emptyDir: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-api
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: api
+    tier: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nexus-api
+  template:
+    metadata:
+      labels:
+        app: nexus-api
+        component: api
+        tier: backend
+    spec:
+      containers:
+      - name: api
+        image: nexus-api:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        - name: REDIS_URL
+          value: "redis://nexus-redis:6379/0"
+        - name: DATABASE_URL
+          value: "postgresql://nexus:$(POSTGRES_PASSWORD)@nexus-postgres:5432/nexus_db"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nexus-secrets
+              key: postgres-password
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: logs
+        emptyDir: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-auth
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: auth
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nexus-auth
+  template:
+    metadata:
+      labels:
+        app: nexus-auth
+        component: auth
+        tier: backend
+    spec:
+      containers:
+      - name: auth
+        image: nexus-auth:latest
+        ports:
+        - containerPort: 5001
+        env:
+        - name: AUTH_ENV
+          value: "production"
+        - name: REDIS_URL
+          value: "redis://nexus-redis:6379/1"
+        - name: DATABASE_URL
+          value: "postgresql://nexus:$(POSTGRES_PASSWORD)@nexus-postgres:5432/nexus_auth"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: nexus-secrets
+              key: jwt-secret
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nexus-secrets
+              key: postgres-password
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5001
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-ui
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: ui
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nexus-ui
+  template:
+    metadata:
+      labels:
+        app: nexus-ui
+        component: ui
+        tier: frontend
+    spec:
+      containers:
+      - name: ui
+        image: nexus-ui:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: REACT_APP_API_URL
+          value: "https://api.nexus.local"
+        - name: REACT_APP_AUTH_URL
+          value: "https://auth.nexus.local"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-sot
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: sot
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nexus-sot
+  template:
+    metadata:
+      labels:
+        app: nexus-sot
+        component: sot
+        tier: backend
+    spec:
+      containers:
+      - name: sot
+        image: nexus-sot:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: SOT_ENV
+          value: "production"
+        - name: REDIS_URL
+          value: "redis://nexus-redis:6379/2"
+        - name: DATABASE_URL
+          value: "postgresql://nexus:$(POSTGRES_PASSWORD)@nexus-postgres:5432/nexus_sot"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nexus-secrets
+              key: postgres-password
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-monitoring
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: monitoring
+    tier: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexus-monitoring
+  template:
+    metadata:
+      labels:
+        app: nexus-monitoring
+        component: monitoring
+        tier: observability
+    spec:
+      containers:
+      - name: prometheus
+        image: prom/prometheus:latest
+        ports:
+        - containerPort: 9090
+        args:
+        - '--config.file=/etc/prometheus/prometheus.yml'
+        - '--storage.tsdb.path=/prometheus'
+        - '--web.console.libraries=/etc/prometheus/console_libraries'
+        - '--web.console.templates=/etc/prometheus/consoles'
+        - '--storage.tsdb.retention.time=30d'
+        - '--web.enable-lifecycle'
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: prometheus-config
+          mountPath: /etc/prometheus
+        - name: prometheus-data
+          mountPath: /prometheus
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: prometheus-config
+        configMap:
+          name: prometheus-config
+      - name: prometheus-data
+        persistentVolumeClaim:
+          claimName: prometheus-pvc
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-grafana
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: grafana
+    tier: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexus-grafana
+  template:
+    metadata:
+      labels:
+        app: nexus-grafana
+        component: grafana
+        tier: observability
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nexus-secrets
+              key: grafana-password
+        - name: GF_USERS_ALLOW_SIGN_UP
+          value: "false"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: grafana-data
+          mountPath: /var/lib/grafana
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: grafana-data
+        persistentVolumeClaim:
+          claimName: grafana-pvc

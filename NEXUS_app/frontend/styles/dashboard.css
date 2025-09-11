@@ -1,0 +1,230 @@
+/* NEXUS_app/frontend/public/styles/dashboard.css */
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .dashboard-section {
+    background: var(--color-white);
+    border-radius: var(--border-radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-gray-200);
+  }
+  
+  .dashboard-section h2 {
+    margin: 0 0 1.5rem 0;
+    color: var(--color-gray-900);
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  
+  /* Case Cards */
+  .cases-grid {
+    display: grid;
+    gap: 1rem;
+  }
+  
+  .case-card {
+    background: var(--color-gray-50);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    border: 1px solid var(--color-gray-200);
+    transition: var(--transition);
+  }
+  
+  .case-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .case-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .case-header h3 {
+    margin: 0;
+    color: var(--color-gray-900);
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+  
+  .case-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  
+  .status-active {
+    background: var(--color-success);
+    color: var(--color-white);
+  }
+  
+  .case-description {
+    color: var(--color-gray-600);
+    margin-bottom: 1rem;
+  }
+  
+  .case-metrics {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .metric-label {
+    font-size: 0.875rem;
+    color: var(--color-gray-500);
+  }
+  
+  .metric-value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+  
+  /* Evidence List */
+  .evidence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .evidence-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--color-gray-50);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-gray-200);
+  }
+  
+  .evidence-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-white);
+    border-radius: 50%;
+  }
+  
+  .evidence-info {
+    flex: 1;
+  }
+  
+  .evidence-info h4 {
+    margin: 0 0 0.25rem 0;
+    color: var(--color-gray-900);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  
+  .evidence-info p {
+    margin: 0;
+    color: var(--color-gray-600);
+    font-size: 0.875rem;
+  }
+  
+  .evidence-status {
+    width: 100px;
+  }
+  
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--color-gray-200);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: var(--color-primary);
+    transition: width 0.3s ease;
+  }
+  
+  /* Insights Panel */
+  .insights-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .insight-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--color-primary-light);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-primary);
+  }
+  
+  .insight-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    color: var(--color-white);
+    border-radius: 50%;
+  }
+  
+  .insight-content h4 {
+    margin: 0 0 0.25rem 0;
+    color: var(--color-white);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  
+  .insight-content p {
+    margin: 0;
+    color: var(--color-white);
+    font-size: 0.875rem;
+    opacity: 0.9;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .dashboard-section {
+      padding: 1rem;
+    }
+    
+    .case-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    .evidence-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    
+    .evidence-status {
+      width: 100%;
+    }
+  }

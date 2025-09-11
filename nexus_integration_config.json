@@ -1,0 +1,59 @@
+{
+  "timestamp": "2025-09-12T00:56:33.926040",
+  "integrations": {
+    "backend_api": {
+      "name": "Backend API",
+      "enabled": true,
+      "sync_interval": 30,
+      "health_check_interval": 60,
+      "dependencies": [],
+      "endpoints": {
+        "health": "http://localhost:8000/health",
+        "status": "http://localhost:8000/status"
+      },
+      "retry_attempts": 3,
+      "timeout": 10
+    },
+    "frontend": {
+      "name": "Frontend",
+      "enabled": true,
+      "sync_interval": 30,
+      "health_check_interval": 60,
+      "dependencies": [
+        "backend_api"
+      ],
+      "endpoints": {
+        "health": "http://localhost:3000/api/health",
+        "status": "http://localhost:3000/api/status"
+      },
+      "retry_attempts": 3,
+      "timeout": 10
+    },
+    "database": {
+      "name": "Database",
+      "enabled": true,
+      "sync_interval": 60,
+      "health_check_interval": 120,
+      "dependencies": [],
+      "endpoints": {
+        "health": "http://localhost:5432/health",
+        "status": "http://localhost:5432/status"
+      },
+      "retry_attempts": 5,
+      "timeout": 15
+    },
+    "monitoring": {
+      "name": "Monitoring",
+      "enabled": true,
+      "sync_interval": 15,
+      "health_check_interval": 30,
+      "dependencies": [],
+      "endpoints": {
+        "metrics": "http://localhost:9090/metrics",
+        "health": "http://localhost:9090/health"
+      },
+      "retry_attempts": 3,
+      "timeout": 10
+    }
+  }
+}

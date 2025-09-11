@@ -1,0 +1,37 @@
+{
+  "system_name": "NEXUS Unified Monitoring System",
+  "version": "1.0.0",
+  "created": "2025-09-10T07:45:24.160868",
+  "monitoring_components": {
+    "reorganization_monitoring": {
+      "enabled": true,
+      "monitor_file_moves": true,
+      "monitor_directory_changes": true,
+      "monitor_archive_operations": true
+    },
+    "agent_lock_monitoring": {
+      "enabled": true,
+      "monitor_file_creation": true,
+      "monitor_violations": true,
+      "monitor_auto_corrections": true
+    },
+    "system_health_monitoring": {
+      "enabled": true,
+      "monitor_performance": true,
+      "monitor_errors": true,
+      "monitor_resources": true
+    }
+  },
+  "unified_dashboard": {
+    "reorganization_status": "nexus_automation/reorganization_dashboard.json",
+    "agent_lock_status": "nexus_automation/agent_lock_dashboard.json",
+    "system_health": "nexus_automation/system_health_dashboard.json",
+    "unified_view": "nexus_automation/unified_dashboard.json"
+  },
+  "alerting": {
+    "reorganization_alerts": true,
+    "agent_lock_alerts": true,
+    "system_health_alerts": true,
+    "unified_alerting": true
+  }
+}

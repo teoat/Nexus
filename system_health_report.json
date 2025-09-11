@@ -1,0 +1,208 @@
+{
+  "timestamp": "2025-09-12T04:54:31.825960",
+  "health_score": 57.3,
+  "system_health": {
+    "timestamp": "2025-09-12T04:54:08.516500",
+    "cpu_percent": 95.0,
+    "memory_percent": 45.0,
+    "disk_percent": 3.3,
+    "load_average": [
+      30.57861328125,
+      17.86669921875,
+      12.3720703125
+    ],
+    "process_count": 663,
+    "python_processes": 16,
+    "network_io": {
+      "bytes_sent": 3814962176,
+      "bytes_recv": 4922348544,
+      "packets_sent": 9555823,
+      "packets_recv": 8896866,
+      "errin": 0,
+      "errout": 0,
+      "dropin": 0,
+      "dropout": 0
+    },
+    "disk_io": {
+      "read_count": 5111767,
+      "write_count": 17178216,
+      "read_bytes": 78215600128,
+      "write_bytes": 288358342656,
+      "read_time": 10120651,
+      "write_time": 11921725
+    },
+    "cpu_available": 5.0,
+    "memory_available": 55.0,
+    "disk_available": 96.7
+  },
+  "task_health": {
+    "total_tasks": 164,
+    "pending_tasks": 101,
+    "completed_tasks": 63,
+    "in_progress_tasks": 0,
+    "completion_rate": 38.41463414634146,
+    "progress_rate": 0.0,
+    "last_updated": "2025-09-12T04:54:09.551536"
+  },
+  "file_health": {
+    "critical_files": {
+      "master_todo.md": {
+        "exists": true,
+        "size": 19441,
+        "modified": "2025-09-12T04:49:49.961577"
+      },
+      "nexus_comprehensive_sot.json": {
+        "exists": true,
+        "size": 1413,
+        "modified": "2025-09-12T02:21:19.371312"
+      },
+      "nexus_events.json": {
+        "exists": true,
+        "size": 84,
+        "modified": "2025-09-12T02:21:19.371603"
+      },
+      "nexus_sot_config.json": {
+        "exists": true,
+        "size": 397,
+        "modified": "2025-09-12T02:21:19.371905"
+      }
+    },
+    "workspace_size": 11632188673,
+    "file_count": 241001,
+    "directory_count": 43234
+  },
+  "process_health": {
+    "nexus_processes": [
+      {
+        "pid": 21273,
+        "name": "bash",
+        "cmdline": "/bin/bash /Users/Arief/Desktop/Nexus/launch_robust_parallel_system.sh monitor",
+        "cpu_percent": 0.0,
+        "memory_percent": 0.001245737075805664,
+        "create_time": "2025-09-12T04:18:34.857353",
+        "uptime": 2156.953106880188
+      },
+      {
+        "pid": 40675,
+        "name": "python3.11",
+        "cmdline": "python /Users/Arief/Desktop/Nexus/intelligent_autoscaler.py --start --project-root /Users/Arief/Desktop/Nexus",
+        "cpu_percent": 0.0,
+        "memory_percent": 0.013929605484008789,
+        "create_time": "2025-09-12T02:59:09.932490",
+        "uptime": 6921.8802490234375
+      },
+      {
+        "pid": 54588,
+        "name": "pwsh",
+        "cmdline": "/usr/local/microsoft/powershell/7/pwsh -s -NoLogo -NoProfile -wd /Users/Arief/Desktop/Nexus",
+        "cpu_percent": 0.1,
+        "memory_percent": 0.12360215187072754,
+        "create_time": "2025-09-12T04:52:56.567264",
+        "uptime": 95.24681997299194
+      },
+      {
+        "pid": 54591,
+        "name": "Python",
+        "cmdline": "/usr/local/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python nexus_web_launcher.py",
+        "cpu_percent": 0.4,
+        "memory_percent": 0.05887150764465332,
+        "create_time": "2025-09-12T04:52:57.203144",
+        "uptime": 94.61102199554443
+      },
+      {
+        "pid": 55404,
+        "name": "Python",
+        "cmdline": "/usr/local/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python /Users/Arief/Desktop/Nexus/nexus_comprehensive_sot.py",
+        "cpu_percent": 0.0,
+        "memory_percent": 0.06520748138427734,
+        "create_time": "2025-09-12T04:53:34.882777",
+        "uptime": 56.93146824836731
+      },
+      {
+        "pid": 55406,
+        "name": "Python",
+        "cmdline": "/usr/local/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python /Users/Arief/Desktop/Nexus/system_health_monitor.py",
+        "cpu_percent": 49.7,
+        "memory_percent": 0.03642439842224121,
+        "create_time": "2025-09-12T04:53:34.914017",
+        "uptime": 56.90030598640442
+      },
+      {
+        "pid": 55408,
+        "name": "Python",
+        "cmdline": "/usr/local/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python /Users/Arief/Desktop/Nexus/backup_recovery_system.py",
+        "cpu_percent": 41.1,
+        "memory_percent": 0.04992485046386719,
+        "create_time": "2025-09-12T04:53:34.945543",
+        "uptime": 56.86891794204712
+      },
+      {
+        "pid": 56219,
+        "name": "python3.11",
+        "cmdline": "python robust_parallel_worker_system.py --cycles 0 --interval 60 --min-todos 10 --max-todos 20 --max-workers 5 --max-retries 5 --parallel",
+        "cpu_percent": 0.0,
+        "memory_percent": 0.03701448440551758,
+        "create_time": "2025-09-12T04:54:16.049733",
+        "uptime": 15.765130281448364
+      },
+      {
+        "pid": 72072,
+        "name": "Python",
+        "cmdline": "/usr/local/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python /Users/Arief/Desktop/Nexus/nexus_comprehensive_sot.py",
+        "cpu_percent": 0.0,
+        "memory_percent": 0.020617246627807617,
+        "create_time": "2025-09-12T03:32:06.150636",
+        "uptime": 4945.670861244202
+      },
+      {
+        "pid": 83857,
+        "name": "Python",
+        "cmdline": "/usr/local/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python nexus_comprehensive_sot.py",
+        "cpu_percent": 0.0,
+        "memory_percent": 0.03267526626586914,
+        "create_time": "2025-09-12T03:43:25.755559",
+        "uptime": 4266.0673451423645
+      },
+      {
+        "pid": 88813,
+        "name": "python3.11",
+        "cmdline": "python /Users/Arief/Desktop/Nexus/system_optimizer.py --monitor --interval 60",
+        "cpu_percent": 0.0,
+        "memory_percent": 0.01589655876159668,
+        "create_time": "2025-09-12T02:08:38.566618",
+        "uptime": 9953.256885051727
+      },
+      {
+        "pid": 91230,
+        "name": "Python",
+        "cmdline": "/Library/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python nexus_sot_manager.py start",
+        "cpu_percent": 0.0,
+        "memory_percent": 0.008481740951538086,
+        "create_time": "2025-09-12T00:36:13.813824",
+        "uptime": 15498.009993076324
+      },
+      {
+        "pid": 91233,
+        "name": "Python",
+        "cmdline": "/usr/local/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python /Users/Arief/Desktop/Nexus/nexus_python_env/bin/uvicorn NEXUS_app.backend.main_enhanced:app --host 0.0.0.0 --port 8000 --reload",
+        "cpu_percent": 2.6,
+        "memory_percent": 0.43715834617614746,
+        "create_time": "2025-09-12T00:36:13.887655",
+        "uptime": 15497.936472892761
+      }
+    ],
+    "total_nexus_processes": 13,
+    "system_processes": 671
+  },
+  "alerts": [
+    {
+      "severity": "high",
+      "type": "cpu_usage",
+      "message": "High CPU usage detected: 95.0%",
+      "value": 95.0,
+      "threshold": 90.0
+    }
+  ],
+  "alert_count": 1,
+  "status": "critical"
+}

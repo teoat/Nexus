@@ -1,0 +1,357 @@
+{
+  "timestamp": "2025-09-12T05:45:00.000000",
+  "version": "2.0.0",
+  "system_name": "Nexus Platform Unified System",
+  "description": "Comprehensive unified system combining integrated features with semantic services",
+  "status": "active",
+  "health_score": 100.0,
+  "components": {
+    "nexus_unified_system": {
+      "id": "nexus_unified_system",
+      "name": "Nexus Unified System",
+      "type": "system",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Unified system combining integrated features with semantic services",
+        "version": "2.0.0",
+        "architecture": "microservices",
+        "deployment": "docker-compose-unified"
+      },
+      "dependencies": []
+    },
+    "nexus_web_launcher": {
+      "id": "nexus_web_launcher",
+      "name": "Unified Web Launcher",
+      "type": "launcher",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Primary interface combining integrated system features",
+        "url": "https://launcher.local",
+        "port": 5000,
+        "features": [
+          "real-time-status",
+          "service-discovery",
+          "load-balancing",
+          "browser-integration",
+          "cross-platform-support"
+        ]
+      },
+      "dependencies": ["nexus_postgres", "nexus_redis"]
+    },
+    "nexus_api": {
+      "id": "nexus_api",
+      "name": "Unified API Service",
+      "type": "backend",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "FastAPI backend with integrated system features",
+        "url": "https://api.local",
+        "port": 8000,
+        "features": [
+          "nexus-app-backend",
+          "monitoring-integration",
+          "automation-integration",
+          "restful-api"
+        ]
+      },
+      "dependencies": ["nexus_postgres", "nexus_redis", "nexus_rabbitmq"]
+    },
+    "nexus_sot": {
+      "id": "nexus_sot",
+      "name": "Unified SOT Service",
+      "type": "backend",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Source of Truth with comprehensive monitoring",
+        "url": "https://sot.local",
+        "port": 8001,
+        "features": [
+          "comprehensive-sot",
+          "automation-integration",
+          "monitoring-integration",
+          "real-time-tracking"
+        ]
+      },
+      "dependencies": ["nexus_postgres", "nexus_redis", "nexus_rabbitmq"]
+    },
+    "nexus_automation": {
+      "id": "nexus_automation",
+      "name": "Unified Automation Service",
+      "type": "backend",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Automation service with robust parallel processing",
+        "url": "https://automation.local",
+        "port": 8002,
+        "features": [
+          "robust-parallel-system",
+          "continuous-automation",
+          "intelligent-autoscaler",
+          "task-management"
+        ]
+      },
+      "dependencies": ["nexus_postgres", "nexus_redis", "nexus_rabbitmq"]
+    },
+    "nexus_gateway": {
+      "id": "nexus_gateway",
+      "name": "Unified Gateway",
+      "type": "proxy",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Nginx reverse proxy with semantic routing",
+        "ports": [80, 443],
+        "features": [
+          "semantic-routing",
+          "ssl-termination",
+          "load-balancing",
+          "rate-limiting",
+          "security-headers"
+        ]
+      },
+      "dependencies": ["nexus_web_launcher", "nexus_api", "nexus_sot"]
+    },
+    "nexus_postgres": {
+      "id": "nexus_postgres",
+      "name": "Unified PostgreSQL",
+      "type": "database",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Primary database with multiple schemas",
+        "port": 5432,
+        "databases": [
+          "nexus_db",
+          "nexus_auth",
+          "nexus_sot",
+          "nexus_automation",
+          "nexus_analytics"
+        ],
+        "features": [
+          "multi-database",
+          "connection-pooling",
+          "backup-support",
+          "monitoring"
+        ]
+      },
+      "dependencies": []
+    },
+    "nexus_redis": {
+      "id": "nexus_redis",
+      "name": "Unified Redis",
+      "type": "cache",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Multi-database Redis cache",
+        "port": 6379,
+        "databases": [
+          "web-launcher",
+          "api-service",
+          "sot-service",
+          "automation-service"
+        ],
+        "features": [
+          "multi-database",
+          "persistence",
+          "memory-optimization",
+          "monitoring"
+        ]
+      },
+      "dependencies": []
+    },
+    "nexus_rabbitmq": {
+      "id": "nexus_rabbitmq",
+      "name": "Unified RabbitMQ",
+      "type": "message-broker",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Message broker for event streaming",
+        "ports": [5672, 15672],
+        "features": [
+          "event-streaming",
+          "message-queuing",
+          "management-interface",
+          "monitoring"
+        ]
+      },
+      "dependencies": []
+    },
+    "nexus_monitoring": {
+      "id": "nexus_monitoring",
+      "name": "Unified Monitoring",
+      "type": "monitoring",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Prometheus monitoring with unified metrics",
+        "url": "https://monitoring.local",
+        "port": 9090,
+        "features": [
+          "unified-metrics",
+          "custom-dashboards",
+          "alerting-rules",
+          "service-discovery"
+        ]
+      },
+      "dependencies": []
+    },
+    "nexus_grafana": {
+      "id": "nexus_grafana",
+      "name": "Unified Grafana",
+      "type": "monitoring",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Unified dashboards and visualization",
+        "url": "https://grafana.local",
+        "port": 3000,
+        "features": [
+          "unified-dashboards",
+          "real-time-visualization",
+          "custom-panels",
+          "alerting"
+        ]
+      },
+      "dependencies": ["nexus_monitoring"]
+    },
+    "nexus_neo4j": {
+      "id": "nexus_neo4j",
+      "name": "Unified Neo4j",
+      "type": "database",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Graph database for complex relationships",
+        "ports": [7474, 7687],
+        "features": [
+          "graph-database",
+          "apoc-plugins",
+          "graph-data-science",
+          "monitoring"
+        ]
+      },
+      "dependencies": []
+    },
+    "nexus_minio": {
+      "id": "nexus_minio",
+      "name": "Unified MinIO",
+      "type": "storage",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Object storage for files and media",
+        "ports": [9000, 9001],
+        "features": [
+          "object-storage",
+          "s3-compatible",
+          "web-console",
+          "monitoring"
+        ]
+      },
+      "dependencies": []
+    },
+    "nexus_jaeger": {
+      "id": "nexus_jaeger",
+      "name": "Unified Jaeger",
+      "type": "observability",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Distributed tracing for request tracking",
+        "url": "https://jaeger.local",
+        "ports": [16686, 14268],
+        "features": [
+          "distributed-tracing",
+          "request-tracking",
+          "performance-analysis",
+          "debugging"
+        ]
+      },
+      "dependencies": []
+    },
+    "nexus_mailhog": {
+      "id": "nexus_mailhog",
+      "name": "Unified MailHog",
+      "type": "development",
+      "status": "active",
+      "health_score": 100.0,
+      "last_updated": "2025-09-12T05:45:00.000000",
+      "details": {
+        "description": "Email testing and development tool",
+        "url": "https://mailhog.local",
+        "ports": [1025, 8025],
+        "features": [
+          "email-testing",
+          "development-support",
+          "web-interface",
+          "smtp-server"
+        ]
+      },
+      "dependencies": []
+    }
+  },
+  "system_metrics": {
+    "timestamp": "2025-09-12T05:45:00.000000",
+    "total_services": 14,
+    "active_services": 14,
+    "health_score": 100.0,
+    "deployment_type": "unified-docker-compose",
+    "version": "2.0.0",
+    "features": [
+      "integrated-web-launcher",
+      "semantic-service-names",
+      "unified-monitoring",
+      "comprehensive-data-layer",
+      "production-ready-security",
+      "auto-scaling-support",
+      "distributed-tracing",
+      "cross-platform-support"
+    ]
+  },
+  "deployment_info": {
+    "docker_compose_file": "docker-compose.nexus-unified.yml",
+    "nginx_config": "nginx/nginx-unified.conf",
+    "launch_script": "launch-nexus-unified.sh",
+    "hosts_entries": [
+      "127.0.0.1 launcher.local",
+      "127.0.0.1 web-launcher.local",
+      "127.0.0.1 nexus.local",
+      "127.0.0.1 api.local",
+      "127.0.0.1 sot.local",
+      "127.0.0.1 automation.local",
+      "127.0.0.1 monitoring.local",
+      "127.0.0.1 grafana.local"
+    ],
+    "ssl_certificates": "nginx/ssl/",
+    "data_volumes": [
+      "nexus_postgres_data",
+      "nexus_redis_data",
+      "nexus_rabbitmq_data",
+      "nexus_prometheus_data",
+      "nexus_grafana_data",
+      "nexus_neo4j_data",
+      "nexus_minio_data"
+    ]
+  }
+}

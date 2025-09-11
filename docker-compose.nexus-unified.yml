@@ -1,0 +1,624 @@
+# Nexus Platform - Unified Production System
+# Combines all features from integrated system with semantic services and optimizations
+# Dissolves legacy systems into modern, production-ready architecture
+
+version: '3.8'
+
+x-common-variables: &common-variables
+  TZ: UTC
+  PYTHONUNBUFFERED: 1
+  PYTHONDONTWRITEBYTECODE: 1
+
+x-common-logging: &common-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-common-networks: &common-networks
+  - nexus-unified-network
+
+x-common-restart: &common-restart
+  restart: unless-stopped
+
+x-common-healthcheck: &common-healthcheck
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s
+
+networks:
+  nexus-unified-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+    labels:
+      - "nexus.network=unified"
+      - "nexus.version=2.0.0"
+
+volumes:
+  # Unified data volumes
+  nexus_postgres_data:
+    driver: local
+    labels:
+      - "nexus.volume=postgres-unified"
+  nexus_redis_data:
+    driver: local
+    labels:
+      - "nexus.volume=redis-unified"
+  nexus_rabbitmq_data:
+    driver: local
+    labels:
+      - "nexus.volume=rabbitmq-unified"
+  nexus_prometheus_data:
+    driver: local
+    labels:
+      - "nexus.volume=prometheus-unified"
+  nexus_grafana_data:
+    driver: local
+    labels:
+      - "nexus.volume=grafana-unified"
+  nexus_neo4j_data:
+    driver: local
+    labels:
+      - "nexus.volume=neo4j-unified"
+  nexus_minio_data:
+    driver: local
+    labels:
+      - "nexus.volume=minio-unified"
+  nexus_logs:
+    driver: local
+    labels:
+      - "nexus.volume=logs-unified"
+
+services:
+  # =============================================================================
+  # UNIFIED REVERSE PROXY & API GATEWAY
+  # =============================================================================
+  
+  nexus-gateway:
+    image: nginx:alpine
+    container_name: nexus-gateway
+    hostname: gateway
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx-unified.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nexus_logs:/var/log/nginx
+    environment:
+      <<: *common-variables
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+    labels:
+      - "nexus.service=gateway"
+      - "nexus.role=proxy"
+      - "nexus.version=2.0.0"
+    depends_on:
+      nexus-web-launcher:
+        condition: service_healthy
+      nexus-api:
+        condition: service_healthy
+      nexus-sot:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+
+  # =============================================================================
+  # UNIFIED WEB LAUNCHER (From Integrated System)
+  # =============================================================================
+
+  nexus-web-launcher:
+    build:
+      context: .
+      dockerfile: docker/web-launcher.Dockerfile
+      args:
+        BUILD_ENV: production
+    container_name: nexus-web-launcher
+    hostname: web-launcher
+    ports:
+      - "5000:5000"
+    environment:
+      <<: *common-variables
+      FLASK_ENV: production
+      FLASK_APP: nexus_web_launcher.py
+      LAUNCHER_PORT: 5000
+      AUTO_OPEN_BROWSER: true
+      ENABLE_REAL_TIME_STATUS: true
+      ENABLE_SERVICE_DISCOVERY: true
+      ENABLE_LOAD_BALANCING: true
+    volumes:
+      - nexus_logs:/app/logs
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+    labels:
+      - "nexus.service=web-launcher"
+      - "nexus.role=launcher"
+      - "nexus.version=2.0.0"
+    depends_on:
+      nexus-postgres:
+        condition: service_healthy
+      nexus-redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  # =============================================================================
+  # UNIFIED CORE SERVICES
+  # =============================================================================
+
+  nexus-api:
+    build:
+      context: .
+      dockerfile: docker/api-unified.Dockerfile
+      args:
+        BUILD_ENV: production
+    container_name: nexus-api
+    hostname: api
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *common-variables
+      FLASK_ENV: production
+      FLASK_APP: nexus_web_launcher.py
+      REDIS_URL: redis://nexus-redis:6379/0
+      DATABASE_URL: postgresql://nexus:${POSTGRES_PASSWORD:-nexus_password}@nexus-postgres:5432/nexus_db
+      RABBITMQ_URL: amqp://nexus:${RABBITMQ_PASSWORD:-nexus_password}@nexus-rabbitmq:5672/nexus
+      NEXUS_APP_BACKEND: true
+      ENABLE_MONITORING: true
+      ENABLE_AUTOMATION: true
+    volumes:
+      - nexus_logs:/app/logs
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+    labels:
+      - "nexus.service=api"
+      - "nexus.role=backend"
+      - "nexus.version=2.0.0"
+    depends_on:
+      nexus-postgres:
+        condition: service_healthy
+      nexus-redis:
+        condition: service_healthy
+      nexus-rabbitmq:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+
+  nexus-sot:
+    build:
+      context: .
+      dockerfile: docker/sot-unified.Dockerfile
+      args:
+        BUILD_ENV: production
+    container_name: nexus-sot
+    hostname: sot
+    ports:
+      - "8001:8001"
+    environment:
+      <<: *common-variables
+      SOT_ENV: production
+      REDIS_URL: redis://nexus-redis:6379/1
+      DATABASE_URL: postgresql://nexus:${POSTGRES_PASSWORD:-nexus_password}@nexus-postgres:5432/nexus_sot
+      RABBITMQ_URL: amqp://nexus:${RABBITMQ_PASSWORD:-nexus_password}@nexus-rabbitmq:5672/sot
+      ENABLE_COMPREHENSIVE_SOT: true
+      ENABLE_AUTOMATION_INTEGRATION: true
+      ENABLE_MONITORING_INTEGRATION: true
+    volumes:
+      - nexus_logs:/app/logs
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+    labels:
+      - "nexus.service=sot"
+      - "nexus.role=backend"
+      - "nexus.version=2.0.0"
+    depends_on:
+      nexus-postgres:
+        condition: service_healthy
+      nexus-redis:
+        condition: service_healthy
+      nexus-rabbitmq:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  nexus-automation:
+    build:
+      context: .
+      dockerfile: docker/automation-unified.Dockerfile
+      args:
+        BUILD_ENV: production
+    container_name: nexus-automation
+    hostname: automation
+    ports:
+      - "8002:8002"
+    environment:
+      <<: *common-variables
+      AUTOMATION_ENV: production
+      REDIS_URL: redis://nexus-redis:6379/2
+      DATABASE_URL: postgresql://nexus:${POSTGRES_PASSWORD:-nexus_password}@nexus-postgres:5432/nexus_automation
+      RABBITMQ_URL: amqp://nexus:${RABBITMQ_PASSWORD:-nexus_password}@nexus-rabbitmq:5672/automation
+      ENABLE_ROBUST_PARALLEL_SYSTEM: true
+      ENABLE_CONTINUOUS_AUTOMATION: true
+      ENABLE_INTELLIGENT_AUTOSCALER: true
+    volumes:
+      - nexus_logs:/app/logs
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+    labels:
+      - "nexus.service=automation"
+      - "nexus.role=backend"
+      - "nexus.version=2.0.0"
+    depends_on:
+      nexus-postgres:
+        condition: service_healthy
+      nexus-redis:
+        condition: service_healthy
+      nexus-rabbitmq:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  # =============================================================================
+  # UNIFIED MONITORING & OBSERVABILITY
+  # =============================================================================
+
+  nexus-monitoring:
+    image: prom/prometheus:latest
+    container_name: nexus-monitoring
+    hostname: monitoring
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus-unified.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/rules:/etc/prometheus/rules:ro
+      - nexus_prometheus_data:/prometheus
+    environment:
+      <<: *common-variables
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+    labels:
+      - "nexus.service=monitoring"
+      - "nexus.role=monitoring"
+      - "nexus.version=2.0.0"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+
+  nexus-grafana:
+    image: grafana/grafana:latest
+    container_name: nexus-grafana
+    hostname: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      <<: *common-variables
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
+      GF_USERS_ALLOW_SIGN_UP: false
+      GF_INSTALL_PLUGINS: grafana-piechart-panel,grafana-worldmap-panel
+      GF_SECURITY_DISABLE_GRAVATAR: true
+      GF_ANALYTICS_REPORTING_ENABLED: false
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/nexus-unified.json
+    volumes:
+      - nexus_grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+    labels:
+      - "nexus.service=grafana"
+      - "nexus.role=monitoring"
+      - "nexus.version=2.0.0"
+    depends_on:
+      nexus-monitoring:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+  # =============================================================================
+  # UNIFIED DATA LAYER
+  # =============================================================================
+
+  nexus-postgres:
+    image: postgres:16-alpine
+    container_name: nexus-postgres
+    hostname: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      <<: *common-variables
+      POSTGRES_DB: nexus_db
+      POSTGRES_USER: nexus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexus_password}
+      POSTGRES_MULTIPLE_DATABASES: nexus_auth,nexus_sot,nexus_automation,nexus_analytics
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    volumes:
+      - nexus_postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-unified-databases.sh:/docker-entrypoint-initdb.d/init-unified-databases.sh
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD-SHELL", "pg_isready -U nexus -d nexus_db"]
+    labels:
+      - "nexus.service=postgres"
+      - "nexus.role=database"
+      - "nexus.version=2.0.0"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+
+  nexus-redis:
+    image: redis:7-alpine
+    container_name: nexus-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server 
+      --appendonly yes 
+      --maxmemory 1gb 
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD:-nexus_redis_password}
+    volumes:
+      - nexus_redis_data:/data
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-nexus_redis_password}", "ping"]
+    labels:
+      - "nexus.service=redis"
+      - "nexus.role=cache"
+      - "nexus.version=2.0.0"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+  nexus-rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: nexus-rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      <<: *common-variables
+      RABBITMQ_DEFAULT_USER: nexus
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-nexus_password}
+      RABBITMQ_DEFAULT_VHOST: nexus
+    volumes:
+      - nexus_rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+    labels:
+      - "nexus.service=rabbitmq"
+      - "nexus.role=message-broker"
+      - "nexus.version=2.0.0"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+  nexus-neo4j:
+    image: neo4j:5.15-community
+    container_name: nexus-neo4j
+    hostname: neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      <<: *common-variables
+      NEO4J_AUTH: nexus/${NEO4J_PASSWORD:-nexus_neo4j_password}
+      NEO4J_PLUGINS: '["apoc", "graph-data-science"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*,gds.*
+      NEO4J_dbms_memory_heap_initial__size: 1g
+      NEO4J_dbms_memory_heap_max__size: 2G
+    volumes:
+      - nexus_neo4j_data:/data
+      - nexus_neo4j_data:/logs
+      - nexus_neo4j_data:/import
+      - nexus_neo4j_data:/plugins
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "cypher-shell", "-u", "nexus", "-p", "${NEO4J_PASSWORD:-nexus_neo4j_password}", "RETURN 1"]
+    labels:
+      - "nexus.service=neo4j"
+      - "nexus.role=database"
+      - "nexus.version=2.0.0"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+
+  nexus-minio:
+    image: minio/minio:latest
+    container_name: nexus-minio
+    hostname: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      <<: *common-variables
+      MINIO_ROOT_USER: nexus
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-nexus_minio_password}
+    volumes:
+      - nexus_minio_data:/data
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    healthcheck:
+      <<: *common-healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+    command: server /data --console-address ":9001"
+    labels:
+      - "nexus.service=minio"
+      - "nexus.role=storage"
+      - "nexus.version=2.0.0"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+  # =============================================================================
+  # DEVELOPMENT & DEBUGGING TOOLS
+  # =============================================================================
+
+  nexus-jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: nexus-jaeger
+    hostname: jaeger
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      <<: *common-variables
+      COLLECTOR_OTLP_ENABLED: true
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    labels:
+      - "nexus.service=jaeger"
+      - "nexus.role=observability"
+      - "nexus.version=2.0.0"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  nexus-mailhog:
+    image: mailhog/mailhog:latest
+    container_name: nexus-mailhog
+    hostname: mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      <<: *common-networks
+    restart: unless-stopped
+    labels:
+      - "nexus.service=mailhog"
+      - "nexus.role=development"
+      - "nexus.version=2.0.0"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'

@@ -1,0 +1,20 @@
+# Nexus Platform - Unified Kubernetes Namespace
+# Production-ready namespace with proper labels and annotations
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-platform
+  labels:
+    name: nexus-platform
+    environment: production
+    version: "1.0.0"
+    managed-by: nexus-operator
+  annotations:
+    description: "Nexus Platform unified namespace for all services"
+    contact: "nexus-team@company.com"
+    created-by: "nexus-deployment-automation"
+    last-updated: "2025-09-12T05:30:00Z"
+spec:
+  finalizers:
+    - kubernetes.io/namespace-finalizer

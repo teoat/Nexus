@@ -1,0 +1,12 @@
+{
+  "report_type": "agent_violation_report",
+  "generated_at": "2025-09-10T07:45:24.154070",
+  "summary": {
+    "total_violations": 0,
+    "by_category": {},
+    "by_agent": {},
+    "recent_violations": []
+  },
+  "violations": [],
+  "recommendations": []
+}

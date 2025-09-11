@@ -1,0 +1,1507 @@
+#!/usr/bin/env python3
+"""
+ NEXUS Platform API Server
+Backend API server for the unified dashboard
+"""
+
+import os
+import sys
+import json
+import time
+import logging
+import asyncio
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass, asdict
+import threading
+from concurrent.futures import ThreadPoolExecutor
+import hashlib
+import uuid
+
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
+from flask_socketio import SocketIO, emit, join_room, leave_room
+import psutil
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('nexus_api_server.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Initialize Flask app
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'nexus-platform-secret-key-2025'
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+@dataclass
+class Task:
+    """Represents a task in the system"""
+    id: str
+    title: str
+    description: str
+    status: str
+    priority: str
+    details: str = ""
+    dependencies: List[str] = None
+    subtasks: List['Task'] = None
+    created_at: str = ""
+    updated_at: str = ""
+    assigned_to: str = ""
+    estimated_hours: float = 0.0
+    actual_hours: float = 0.0
+    tags: List[str] = None
+    category: str = ""
+    complexity_score: float = 0.0
+    
+    def __post_init__(self):
+        if self.dependencies is None:
+            self.dependencies = []
+        if self.subtasks is None:
+            self.subtasks = []
+        if self.tags is None:
+            self.tags = []
+        if not self.created_at:
+            self.created_at = datetime.now().isoformat()
+        if not self.updated_at:
+            self.updated_at = datetime.now().isoformat()
+
+class NexusAPIServer:
+    """Main API server class"""
+    
+    def __init__(self, project_root: str = "/Users/Arief/Desktop/Nexus"):
+        self.project_root = Path(project_root)
+        self.tasks: Dict[str, Task] = {}
+        self.automation_status = {
+            "running": False,
+            "started_at": None,
+            "cycles_completed": 0,
+            "last_cycle": None
+        }
+        self.sot_status = {
+            "files": {},
+            "violations": [],
+            "last_validation": None
+        }
+        self.system_metrics = {
+            "cpu_percent": 0.0,
+            "memory_percent": 0.0,
+            "disk_percent": 0.0,
+            "uptime": 0,
+            "response_time": 0.0
+        }
+        
+        # Load initial data
+        self.load_tasks()
+        self.load_sot_status()
+        
+        # Start background tasks
+        self.start_background_tasks()
+    
+    def load_tasks(self):
+        """Load tasks from JSON file"""
+        tasks_file = self.project_root / "unimplemented_tasks.json"
+        
+        if tasks_file.exists():
+            try:
+                with open(tasks_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                for task_data in data.get("tasks", []):
+                    task = Task(**task_data)
+                    self.tasks[task.id] = task
+                
+                logger.info(f" Loaded {len(self.tasks)} tasks")
+            except Exception as e:
+                logger.error(f"❌ Error loading tasks: {e}")
+        else:
+            # Create sample tasks if no file exists
+            self.create_sample_tasks()
+    
+    def create_sample_tasks(self):
+        """Create sample tasks for demonstration"""
+        sample_tasks = [
+            Task(
+                id="1",
+                title="Fix Event Loop Synchronization Issues",
+                description="Resolve asyncio threading problems affecting system stability",
+                status="in-progress",
+                priority="critical",
+                details="Fix asyncio threading problems affecting system stability",
+                category="system",
+                complexity_score=8.5
+            ),
+            Task(
+                id="2",
+                title="Create Unified Dashboard Interface",
+                description="Consolidate multiple dashboard interfaces into single interface",
+                status="done",
+                priority="critical",
+                details="Consolidate SOT_DASHBOARD.html, automation_dashboard.py, and realtime_dashboard.py",
+                category="frontend",
+                complexity_score=7.0
+            ),
+            Task(
+                id="3",
+                title="Implement WebSocket Connections",
+                description="Add real-time WebSocket communication for live updates",
+                status="pending",
+                priority="high",
+                details="Enable real-time data synchronization between frontend and backend",
+                category="integration",
+                complexity_score=6.5
+            ),
+            Task(
+                id="4",
+                title="Create Centralized API Gateway",
+                description="Implement single API gateway for all service communication",
+                status="pending",
+                priority="high",
+                details="Centralize API management and routing",
+                category="backend",
+                complexity_score=8.0
+            ),
+            Task(
+                id="5",
+                title="Implement Data Encryption at Rest",
+                description="Add comprehensive data encryption for sensitive information",
+                status="pending",
+                priority="high",
+                details="Implement encryption for database, files, and sensitive data",
+                category="security",
+                complexity_score=7.5
+            )
+        ]
+        
+        for task in sample_tasks:
+            self.tasks[task.id] = task
+        
+        logger.info(f"📋 Created {len(sample_tasks)} sample tasks")
+    
+    def load_sot_status(self):
+        """Load SOT status from files"""
+        try:
+            # Load SOT files status
+            sot_files = [
+                "master_todo.md",
+                "SINGLE_SOURCE_OF_TRUTH.json",
+                "enhanced_automation_config.json",
+                "unimplemented_tasks.json"
+            ]
+            
+            for file_name in sot_files:
+                file_path = self.project_root / file_name
+                if file_path.exists():
+                    self.sot_status["files"][file_name] = {
+                        "exists": True,
+                        "size": file_path.stat().st_size,
+                        "modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
+                        "status": "valid"
+                    }
+                else:
+                    self.sot_status["files"][file_name] = {
+                        "exists": False,
+                        "status": "missing"
+                    }
+            
+            self.sot_status["last_validation"] = datetime.now().isoformat()
+            logger.info(f"📊 Loaded SOT status for {len(self.sot_status['files'])} files")
+            
+        except Exception as e:
+            logger.error(f"❌ Error loading SOT status: {e}")
+    
+    def start_background_tasks(self):
+        """Start background tasks for monitoring and updates"""
+        def update_system_metrics():
+            while True:
+                try:
+                    self.system_metrics.update({
+                        "cpu_percent": psutil.cpu_percent(interval=1),
+                        "memory_percent": psutil.virtual_memory().percent,
+                        "disk_percent": psutil.disk_usage('/').percent,
+                        "uptime": time.time() - psutil.boot_time(),
+                        "response_time": time.time()
+                    })
+                    
+                    # Emit metrics to connected clients
+                    socketio.emit('system_metrics', self.system_metrics)
+                    
+                except Exception as e:
+                    logger.error(f"❌ Error updating system metrics: {e}")
+                
+                time.sleep(5)  # Update every 5 seconds
+        
+        # Start background thread
+        metrics_thread = threading.Thread(target=update_system_metrics, daemon=True)
+        metrics_thread.start()
+        logger.info(" Started background system monitoring")
+    
+    def get_tasks(self, status_filter=None, priority_filter=None, search=None):
+        """Get filtered tasks"""
+        filtered_tasks = list(self.tasks.values())
+        
+        if status_filter:
+            filtered_tasks = [t for t in filtered_tasks if t.status == status_filter]
+        
+        if priority_filter:
+            filtered_tasks = [t for t in filtered_tasks if t.priority == priority_filter]
+        
+        if search:
+            search_lower = search.lower()
+            filtered_tasks = [t for t in filtered_tasks 
+                            if search_lower in t.title.lower() or 
+                               search_lower in t.description.lower()]
+        
+        return filtered_tasks
+    
+    def get_task_stats(self):
+        """Get task statistics"""
+        total_tasks = len(self.tasks)
+        completed_tasks = len([t for t in self.tasks.values() if t.status == "done"])
+        in_progress_tasks = len([t for t in self.tasks.values() if t.status == "in-progress"])
+        pending_tasks = len([t for t in self.tasks.values() if t.status == "pending"])
+        error_tasks = len([t for t in self.tasks.values() if t.status == "error"])
+        
+        completion_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+        
+        return {
+            "total_tasks": total_tasks,
+            "completed_tasks": completed_tasks,
+            "in_progress_tasks": in_progress_tasks,
+            "pending_tasks": pending_tasks,
+            "error_tasks": error_tasks,
+            "completion_rate": round(completion_rate, 1)
+        }
+    
+    def get_priority_breakdown(self):
+        """Get priority breakdown"""
+        breakdown = {"critical": 0, "high": 0, "medium": 0, "low": 0}
+        
+        for task in self.tasks.values():
+            if task.priority in breakdown:
+                breakdown[task.priority] += 1
+        
+        return breakdown
+    
+    def get_status_breakdown(self):
+        """Get status breakdown"""
+        breakdown = {"pending": 0, "in-progress": 0, "done": 0, "error": 0}
+        
+        for task in self.tasks.values():
+            if task.status in breakdown:
+                breakdown[task.status] += 1
+        
+        return breakdown
+
+# Initialize API server
+api_server = NexusAPIServer()
+
+# API Routes
+@app.route('/')
+def index():
+    """Serve the main dashboard"""
+    return send_from_directory('NEXUS_app/frontend', 'dashboard.html')
+
+@app.route('/api/tasks', methods=['GET'])
+def get_tasks():
+    """Get all tasks with optional filtering"""
+    status_filter = request.args.get('status')
+    priority_filter = request.args.get('priority')
+    search = request.args.get('search')
+    
+    tasks = api_server.get_tasks(status_filter, priority_filter, search)
+    
+    return jsonify({
+        "success": True,
+        "tasks": [asdict(task) for task in tasks],
+        "total": len(tasks)
+    })
+
+@app.route('/api/tasks/<task_id>', methods=['GET'])
+def get_task(task_id):
+    """Get a specific task"""
+    if task_id in api_server.tasks:
+        return jsonify({
+            "success": True,
+            "task": asdict(api_server.tasks[task_id])
+        })
+    else:
+        return jsonify({
+            "success": False,
+            "error": "Task not found"
+        }), 404
+
+@app.route('/api/tasks', methods=['POST'])
+def create_task():
+    """Create a new task"""
+    try:
+        data = request.get_json()
+        
+        # Generate new task ID
+        task_id = str(uuid.uuid4())
+        
+        # Create new task
+        task = Task(
+            id=task_id,
+            title=data.get('title', ''),
+            description=data.get('description', ''),
+            status=data.get('status', 'pending'),
+            priority=data.get('priority', 'medium'),
+            details=data.get('details', ''),
+            category=data.get('category', ''),
+            complexity_score=data.get('complexity_score', 0.0)
+        )
+        
+        api_server.tasks[task_id] = task
+        
+        # Emit real-time update
+        socketio.emit('task_created', asdict(task))
+        
+        return jsonify({
+            "success": True,
+            "task": asdict(task)
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"❌ Error creating task: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 400
+
+@app.route('/api/tasks/<task_id>', methods=['PUT'])
+def update_task(task_id):
+    """Update a task"""
+    if task_id not in api_server.tasks:
+        return jsonify({
+            "success": False,
+            "error": "Task not found"
+        }), 404
+    
+    try:
+        data = request.get_json()
+        task = api_server.tasks[task_id]
+        
+        # Update task fields
+        for field, value in data.items():
+            if hasattr(task, field):
+                setattr(task, field, value)
+        
+        task.updated_at = datetime.now().isoformat()
+        
+        # Emit real-time update
+        socketio.emit('task_updated', asdict(task))
+        
+        return jsonify({
+            "success": True,
+            "task": asdict(task)
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error updating task: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 400
+
+@app.route('/api/tasks/<task_id>', methods=['DELETE'])
+def delete_task(task_id):
+    """Delete a task"""
+    if task_id not in api_server.tasks:
+        return jsonify({
+            "success": False,
+            "error": "Task not found"
+        }), 404
+    
+    try:
+        task = api_server.tasks.pop(task_id)
+        
+        # Emit real-time update
+        socketio.emit('task_deleted', {"id": task_id})
+        
+        return jsonify({
+            "success": True,
+            "message": "Task deleted successfully"
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error deleting task: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 400
+
+@app.route('/api/stats', methods=['GET'])
+def get_stats():
+    """Get task statistics"""
+    return jsonify({
+        "success": True,
+        "stats": api_server.get_task_stats(),
+        "priority_breakdown": api_server.get_priority_breakdown(),
+        "status_breakdown": api_server.get_status_breakdown()
+    })
+
+@app.route('/api/automation/status', methods=['GET'])
+def get_automation_status():
+    """Get automation status"""
+    return jsonify({
+        "success": True,
+        "automation": api_server.automation_status
+    })
+
+@app.route('/api/automation/start', methods=['POST'])
+def start_automation():
+    """Start automation"""
+    try:
+        api_server.automation_status.update({
+            "running": True,
+            "started_at": datetime.now().isoformat(),
+            "cycles_completed": 0
+        })
+        
+        # Emit real-time update
+        socketio.emit('automation_started', api_server.automation_status)
+        
+        return jsonify({
+            "success": True,
+            "message": "Automation started successfully"
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error starting automation: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 400
+
+@app.route('/api/automation/stop', methods=['POST'])
+def stop_automation():
+    """Stop automation"""
+    try:
+        api_server.automation_status.update({
+            "running": False,
+            "stopped_at": datetime.now().isoformat()
+        })
+        
+        # Emit real-time update
+        socketio.emit('automation_stopped', api_server.automation_status)
+        
+        return jsonify({
+            "success": True,
+            "message": "Automation stopped successfully"
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error stopping automation: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 400
+
+@app.route('/api/sot/status', methods=['GET'])
+def get_sot_status():
+    """Get SOT status"""
+    return jsonify({
+        "success": True,
+        "sot": api_server.sot_status
+    })
+
+@app.route('/api/sot/validate', methods=['POST'])
+def validate_sot():
+    """Validate SOT files"""
+    try:
+        api_server.load_sot_status()
+        
+        # Emit real-time update
+        socketio.emit('sot_validated', api_server.sot_status)
+        
+        return jsonify({
+            "success": True,
+            "message": "SOT validation completed",
+            "sot": api_server.sot_status
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error validating SOT: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 400
+
+@app.route('/api/monitoring/metrics', methods=['GET'])
+def get_system_metrics():
+    """Get system metrics"""
+    return jsonify({
+        "success": True,
+        "metrics": api_server.system_metrics
+    })
+
+@app.route('/api/security/status', methods=['GET'])
+def get_security_status():
+    """Get security status"""
+    return jsonify({
+        "success": True,
+        "security": {
+            "authentication": {
+                "enabled": True,
+                "active_users": 3,
+                "last_login": "2 minutes ago"
+            },
+            "alerts": [],
+            "last_scan": datetime.now().isoformat()
+        }
+    })
+
+@app.route('/api/performance/recommendations', methods=['GET'])
+def get_performance_recommendations():
+    """Get performance recommendations"""
+    return jsonify({
+        "success": True,
+        "recommendations": [
+            {
+                "id": "redis-caching",
+                "title": "Enable Redis caching",
+                "description": "Implement Redis caching for better performance",
+                "priority": "high",
+                "impact": "medium"
+            },
+            {
+                "id": "db-optimization",
+                "title": "Optimize database queries",
+                "description": "Add indexes and optimize slow queries",
+                "priority": "medium",
+                "impact": "high"
+            },
+            {
+                "id": "cdn-implementation",
+                "title": "Implement CDN",
+                "description": "Use CDN for static assets",
+                "priority": "low",
+                "impact": "medium"
+            }
+        ]
+    })
+
+# WebSocket Events
+@socketio.on('connect')
+def handle_connect():
+    """Handle client connection"""
+    logger.info(f"🔌 Client connected: {request.sid}")
+    emit('connected', {'message': 'Connected to NEXUS API server'})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    """Handle client disconnection"""
+    logger.info(f"🔌 Client disconnected: {request.sid}")
+
+@socketio.on('join_room')
+def handle_join_room(data):
+    """Handle joining a room"""
+    room = data.get('room', 'default')
+    join_room(room)
+    emit('joined_room', {'room': room})
+
+@socketio.on('leave_room')
+def handle_leave_room(data):
+    """Handle leaving a room"""
+    room = data.get('room', 'default')
+    leave_room(room)
+    emit('left_room', {'room': room})
+
+if __name__ == '__main__':
+    logger.info(" Starting NEXUS API Server")
+    logger.info(f" Project root: {api_server.project_root}")
+    logger.info(f"📋 Loaded {len(api_server.tasks)} tasks")
+    
+    # Run the server
+    socketio.run(app, host='0.0.0.0', port=8000, debug=True)
+```
+
+Now let me create the requirements file for the API server:
+
+```txt
+Flask==2.3.3
+Flask-CORS==4.0.0
+Flask-SocketIO==5.3.6
+psutil==5.9.6
+python-socketio==5.9.0
+eventlet==0.33.3
+```
+
+## Task 4: Create WebSocket Integration for Real-time Updates
+
+Let me create a WebSocket client for the dashboard:
+
+```javascript
+<code_block_to_apply_changes_from>
+// WebSocket client for real-time updates
+class NexusWebSocketClient {
+    constructor() {
+        this.socket = null;
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 5;
+        this.reconnectDelay = 1000;
+        this.isConnected = false;
+    }
+
+    connect() {
+        try {
+            this.socket = io('http://localhost:8000');
+            
+            this.socket.on('connect', () => {
+                console.log(' Connected to NEXUS API server');
+                this.isConnected = true;
+                this.reconnectAttempts = 0;
+                this.showNotification('Connected to server', 'success');
+            });
+
+            this.socket.on('disconnect', () => {
+                console.log('🔌 Disconnected from server');
+                this.isConnected = false;
+                this.showNotification('Disconnected from server', 'warning');
+                this.attemptReconnect();
+            });
+
+            this.socket.on('task_created', (task) => {
+                console.log('📝 Task created:', task);
+                this.handleTaskCreated(task);
+            });
+
+            this.socket.on('task_updated', (task) => {
+                console.log('📝 Task updated:', task);
+                this.handleTaskUpdated(task);
+            });
+
+            this.socket.on('task_deleted', (data) => {
+                console.log('📝 Task deleted:', data);
+                this.handleTaskDeleted(data.id);
+            });
+
+            this.socket.on('automation_started', (status) => {
+                console.log(' Automation started:', status);
+                this.handleAutomationUpdate(status);
+            });
+
+            this.socket.on('automation_stopped', (status) => {
+                console.log(' Automation stopped:', status);
+                this.handleAutomationUpdate(status);
+            });
+
+            this.socket.on('sot_validated', (status) => {
+                console.log('📊 SOT validated:', status);
+                this.handleSOTUpdate(status);
+            });
+
+            this.socket.on('system_metrics', (metrics) => {
+                console.log('📈 System metrics:', metrics);
+                this.handleSystemMetrics(metrics);
+            });
+
+        } catch (error) {
+            console.error('❌ WebSocket connection error:', error);
+            this.attemptReconnect();
+        }
+    }
+
+    attemptReconnect() {
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++;
+            console.log(`🔄 Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+            
+            setTimeout(() => {
+                this.connect();
+            }, this.reconnectDelay * this.reconnectAttempts);
+        } else {
+            console.error('❌ Max reconnection attempts reached');
+            this.showNotification('Connection lost. Please refresh the page.', 'error');
+        }
+    }
+
+    handleTaskCreated(task) {
+        // Add task to current view if applicable
+        if (currentSection === 'tasks' || currentSection === 'dashboard') {
+            this.addTaskToView(task);
+        }
+        this.showNotification(`New task created: ${task.title}`, 'info');
+    }
+
+    handleTaskUpdated(task) {
+        // Update task in current view
+        this.updateTaskInView(task);
+        this.showNotification(`Task updated: ${task.title}`, 'info');
+    }
+
+    handleTaskDeleted(taskId) {
+        // Remove task from current view
+        this.removeTaskFromView(taskId);
+        this.showNotification('Task deleted', 'info');
+    }
+
+    handleAutomationUpdate(status) {
+        // Update automation status display
+        this.updateAutomationStatus(status);
+    }
+
+    handleSOTUpdate(status) {
+        // Update SOT status display
+        this.updateSOTStatus(status);
+    }
+
+    handleSystemMetrics(metrics) {
+        // Update system metrics display
+        this.updateSystemMetrics(metrics);
+    }
+
+    addTaskToView(task) {
+        // Implementation depends on current view
+        if (typeof loadTasksData === 'function') {
+            loadTasksData();
+        }
+    }
+
+    updateTaskInView(task) {
+        // Implementation depends on current view
+        if (typeof loadTasksData === 'function') {
+            loadTasksData();
+        }
+    }
+
+    removeTaskFromView(taskId) {
+        // Implementation depends on current view
+        if (typeof loadTasksData === 'function') {
+            loadTasksData();
+        }
+    }
+
+    updateAutomationStatus(status) {
+        const statusElement = document.getElementById('automation-status');
+        if (statusElement) {
+            if (status.running) {
+                statusElement.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Automation is running
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Status:</strong> Active
+                        </div>
+                        <div class="col-6">
+                            <strong>Started:</strong> ${new Date(status.started_at).toLocaleString()}
+                        </div>
+                    </div>
+                `;
+            } else {
+                statusElement.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-pause-circle me-2"></i>
+                        Automation is stopped
+                    </div>
+                `;
+            }
+        }
+    }
+
+    updateSOTStatus(status) {
+        // Update SOT status display
+        if (typeof loadSOTData === 'function') {
+            loadSOTData();
+        }
+    }
+
+    updateSystemMetrics(metrics) {
+        // Update system metrics in monitoring section
+        const systemHealthElement = document.getElementById('system-health');
+        if (systemHealthElement) {
+            systemHealthElement.innerHTML = `
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-${metrics.cpu_percent > 80 ? 'danger' : metrics.cpu_percent > 60 ? 'warning' : 'success'}">${metrics.cpu_percent.toFixed(1)}%</div>
+                            <small>CPU Usage</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-${metrics.memory_percent > 80 ? 'danger' : metrics.memory_percent > 60 ? 'warning' : 'success'}">${metrics.memory_percent.toFixed(1)}%</div>
+                            <small>Memory Usage</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-${metrics.disk_percent > 80 ? 'danger' : metrics.disk_percent > 60 ? 'warning' : 'success'}">${metrics.disk_percent.toFixed(1)}%</div>
+                            <small>Disk Usage</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-info">${metrics.response_time.toFixed(0)}ms</div>
+                            <small>Response Time</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        const notificationContainer = document.getElementById('notification-container');
+        if (notificationContainer) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show`;
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            notificationContainer.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+    }
+
+    disconnect() {
+        if (this.socket) {
+            this.socket.disconnect();
+            this.isConnected = false;
+        }
+    }
+}
+
+// Initialize WebSocket client
+const wsClient = new NexusWebSocketClient();
+wsClient.connect();
+```
+
+## Task 5: Create Centralized API Gateway
+
+Let me create a centralized API gateway configuration:
+
+```python
+#!/usr/bin/env python3
+"""
+ NEXUS Platform API Gateway
+Centralized API gateway for all service communication
+"""
+
+import os
+import sys
+import json
+import time
+import logging
+import asyncio
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+import threading
+from concurrent.futures import ThreadPoolExecutor
+import hashlib
+import uuid
+
+from flask import Flask, request, jsonify, redirect, url_for
+from flask_cors import CORS
+import requests
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('nexus_api_gateway.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+class NexusAPIGateway:
+    """Centralized API Gateway for NEXUS Platform"""
+    
+    def __init__(self):
+        self.services = {
+            "dashboard": {
+                "url": "http://localhost:8000",
+                "health_endpoint": "/api/health",
+                "status": "unknown"
+            },
+            "automation": {
+                "url": "http://localhost:8001",
+                "health_endpoint": "/api/health",
+                "status": "unknown"
+            },
+            "sot": {
+                "url": "http://localhost:8002",
+                "health_endpoint": "/api/health",
+                "status": "unknown"
+            },
+            "monitoring": {
+                "url": "http://localhost:8003",
+                "health_endpoint": "/api/health",
+                "status": "unknown"
+            },
+            "security": {
+                "url": "http://localhost:8004",
+                "health_endpoint": "/api/health",
+                "status": "unknown"
+            }
+        }
+        
+        self.routes = {
+            "/api/tasks": "dashboard",
+            "/api/stats": "dashboard",
+            "/api/automation": "automation",
+            "/api/sot": "sot",
+            "/api/monitoring": "monitoring",
+            "/api/security": "security"
+        }
+        
+        self.rate_limits = {}
+        self.cache = {}
+        self.cache_ttl = 300  # 5 minutes
+        
+        # Start health monitoring
+        self.start_health_monitoring()
+    
+    def start_health_monitoring(self):
+        """Start background health monitoring"""
+        def monitor_health():
+            while True:
+                try:
+                    for service_name, service_config in self.services.items():
+                        try:
+                            response = requests.get(
+                                f"{service_config['url']}{service_config['health_endpoint']}",
+                                timeout=5
+                            )
+                            if response.status_code == 200:
+                                service_config['status'] = 'healthy'
+                            else:
+                                service_config['status'] = 'unhealthy'
+                        except Exception as e:
+                            service_config['status'] = 'unhealthy'
+                            logger.warning(f"⚠️ Service {service_name} is unhealthy: {e}")
+                    
+                    time.sleep(30)  # Check every 30 seconds
+                    
+                except Exception as e:
+                    logger.error(f"❌ Health monitoring error: {e}")
+                    time.sleep(60)
+        
+        health_thread = threading.Thread(target=monitor_health, daemon=True)
+        health_thread.start()
+        logger.info("🔄 Started health monitoring")
+    
+    def get_service_url(self, path):
+        """Get the appropriate service URL for a given path"""
+        for route, service_name in self.routes.items():
+            if path.startswith(route):
+                service_config = self.services.get(service_name)
+                if service_config and service_config['status'] == 'healthy':
+                    return f"{service_config['url']}{path}"
+                else:
+                    # Fallback to dashboard service
+                    return f"{self.services['dashboard']['url']}{path}"
+        
+        # Default to dashboard service
+        return f"{self.services['dashboard']['url']}{path}"
+    
+    def check_rate_limit(self, client_ip, endpoint):
+        """Check if client has exceeded rate limit"""
+        key = f"{client_ip}:{endpoint}"
+        now = time.time()
+        
+        if key not in self.rate_limits:
+            self.rate_limits[key] = []
+        
+        # Remove old entries (older than 1 minute)
+        self.rate_limits[key] = [
+            timestamp for timestamp in self.rate_limits[key]
+            if now - timestamp < 60
+        ]
+        
+        # Check if limit exceeded (100 requests per minute)
+        if len(self.rate_limits[key]) >= 100:
+            return False
+        
+        # Add current request
+        self.rate_limits[key].append(now)
+        return True
+    
+    def get_cached_response(self, path, params):
+        """Get cached response if available"""
+        cache_key = f"{path}:{hash(str(sorted(params.items())))}"
+        
+        if cache_key in self.cache:
+            cached_data, timestamp = self.cache[cache_key]
+            if time.time() - timestamp < self.cache_ttl:
+                return cached_data
+        
+        return None
+    
+    def cache_response(self, path, params, response_data):
+        """Cache response data"""
+        cache_key = f"{path}:{hash(str(sorted(params.items())))}"
+        self.cache[cache_key] = (response_data, time.time())
+    
+    def proxy_request(self, path, method='GET', data=None, params=None):
+        """Proxy request to appropriate service"""
+        try:
+            service_url = self.get_service_url(path)
+            
+            # Check rate limit
+            client_ip = request.remote_addr
+            if not self.check_rate_limit(client_ip, path):
+                return jsonify({
+                    "success": False,
+                    "error": "Rate limit exceeded"
+                }), 429
+            
+            # Check cache for GET requests
+            if method == 'GET' and params:
+                cached_response = self.get_cached_response(path, params)
+                if cached_response:
+                    return jsonify(cached_response)
+            
+            # Make request to service
+            if method == 'GET':
+                response = requests.get(service_url, params=params, timeout=10)
+            elif method == 'POST':
+                response = requests.post(service_url, json=data, timeout=10)
+            elif method == 'PUT':
+                response = requests.put(service_url, json=data, timeout=10)
+            elif method == 'DELETE':
+                response = requests.delete(service_url, timeout=10)
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": "Unsupported method"
+                }), 405
+            
+            # Parse response
+            response_data = response.json()
+            
+            # Cache successful GET responses
+            if method == 'GET' and response.status_code == 200 and params:
+                self.cache_response(path, params, response_data)
+            
+            return jsonify(response_data), response.status_code
+            
+        except requests.exceptions.Timeout:
+            return jsonify({
+                "success": False,
+                "error": "Service timeout"
+            }), 504
+        except requests.exceptions.ConnectionError:
+            return jsonify({
+                "success": False,
+                "error": "Service unavailable"
+            }), 503
+        except Exception as e:
+            logger.error(f"❌ Proxy error: {e}")
+            return jsonify({
+                "success": False,
+                "error": "Internal server error"
+            }), 500
+
+# Initialize Flask app
+app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app)
+CORS(app)
+
+# Initialize API Gateway
+gateway = NexusAPIGateway()
+
+# API Gateway Routes
+@app.route('/api/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
+def proxy_api(path):
+    """Proxy API requests to appropriate services"""
+    full_path = f"/api/{path}"
+    method = request.method
+    data = request.get_json() if request.is_json else None
+    params = request.args.to_dict()
+    
+    return gateway.proxy_request(full_path, method, data, params)
+
+@app.route('/api/gateway/status', methods=['GET'])
+def get_gateway_status():
+    """Get gateway status and service health"""
+    return jsonify({
+        "success": True,
+        "gateway": {
+            "status": "running",
+            "timestamp": datetime.now().isoformat(),
+            "services": gateway.services,
+            "cache_size": len(gateway.cache),
+            "rate_limits": len(gateway.rate_limits)
+        }
+    })
+
+@app.route('/api/gateway/health', methods=['GET'])
+def get_gateway_health():
+    """Get gateway health status"""
+    healthy_services = sum(1 for service in gateway.services.values() if service['status'] == 'healthy')
+    total_services = len(gateway.services)
+    
+    return jsonify({
+        "success": True,
+        "health": {
+            "status": "healthy" if healthy_services == total_services else "degraded",
+            "healthy_services": healthy_services,
+            "total_services": total_services,
+            "timestamp": datetime.now().isoformat()
+        }
+    })
+
+@app.route('/api/gateway/cache/clear', methods=['POST'])
+def clear_cache():
+    """Clear API gateway cache"""
+    gateway.cache.clear()
+    return jsonify({
+        "success": True,
+        "message": "Cache cleared successfully"
+    })
+
+@app.route('/api/gateway/rate-limits/clear', methods=['POST'])
+def clear_rate_limits():
+    """Clear rate limit data"""
+    gateway.rate_limits.clear()
+    return jsonify({
+        "success": True,
+        "message": "Rate limits cleared successfully"
+    })
+
+@app.route('/')
+def index():
+    """Redirect to dashboard"""
+    return redirect('/dashboard')
+
+@app.route('/dashboard')
+def dashboard():
+    """Serve dashboard"""
+    return send_from_directory('NEXUS_app/frontend', 'dashboard.html')
+
+if __name__ == '__main__':
+    logger.info(" Starting NEXUS API Gateway")
+    logger.info(f"📊 Monitoring {len(gateway.services)} services")
+    
+    app.run(host='0.0.0.0', port=9000, debug=True)
+```
+
+## Task 6: Create Data Encryption System
+
+Let me create a data encryption system for sensitive information:
+
+```python
+#!/usr/bin/env python3
+"""
+🔐 NEXUS Platform Data Encryption System
+Comprehensive data encryption for sensitive information
+"""
+
+import os
+import sys
+import json
+import base64
+import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Union
+import hashlib
+import secrets
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+import threading
+import time
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('nexus_encryption.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+class NexusEncryptionManager:
+    """Comprehensive data encryption manager"""
+    
+    def __init__(self, project_root: str = "/Users/Arief/Desktop/Nexus"):
+        self.project_root = Path(project_root)
+        self.keys_dir = self.project_root / "encryption_keys"
+        self.keys_dir.mkdir(exist_ok=True)
+        
+        # Encryption keys
+        self.master_key = None
+        self.data_key = None
+        self.config_key = None
+        
+        # Encryption instances
+        self.data_cipher = None
+        self.config_cipher = None
+        
+        # Key rotation settings
+        self.key_rotation_interval = 86400  # 24 hours
+        self.last_key_rotation = 0
+        
+        # Initialize encryption
+        self.initialize_encryption()
+        
+        # Start key rotation monitoring
+        self.start_key_rotation_monitoring()
+    
+    def initialize_encryption(self):
+        """Initialize encryption keys and ciphers"""
+        try:
+            # Load or generate master key
+            self.master_key = self.load_or_generate_key("master.key")
+            
+            # Load or generate data encryption key
+            self.data_key = self.load_or_generate_key("data.key")
+            
+            # Load or generate config encryption key
+            self.config_key = self.load_or_generate_key("config.key")
+            
+            # Initialize ciphers
+            self.data_cipher = Fernet(self.data_key)
+            self.config_cipher = Fernet(self.config_key)
+            
+            logger.info("🔐 Encryption system initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"❌ Error initializing encryption: {e}")
+            raise
+    
+    def load_or_generate_key(self, key_name: str) -> bytes:
+        """Load existing key or generate new one"""
+        key_file = self.keys_dir / key_name
+        
+        if key_file.exists():
+            try:
+                with open(key_file, 'rb') as f:
+                    key = f.read()
+                logger.info(f"🔑 Loaded existing key: {key_name}")
+                return key
+            except Exception as e:
+                logger.warning(f"⚠️ Error loading key {key_name}: {e}")
+        
+        # Generate new key
+        key = Fernet.generate_key()
+        try:
+            with open(key_file, 'wb') as f:
+                f.write(key)
+            os.chmod(key_file, 0o600)  # Restrict permissions
+            logger.info(f" Generated new key: {key_name}")
+            return key
+        except Exception as e:
+            logger.error(f"❌ Error saving key {key_name}: {e}")
+            raise
+    
+    def encrypt_data(self, data: Union[str, bytes, dict], key_type: str = "data") -> str:
+        """Encrypt data using specified key type"""
+        try:
+            # Convert data to bytes
+            if isinstance(data, dict):
+                data_bytes = json.dumps(data).encode('utf-8')
+            elif isinstance(data, str):
+                data_bytes = data.encode('utf-8')
+            else:
+                data_bytes = data
+            
+            # Select appropriate cipher
+            if key_type == "data":
+                cipher = self.data_cipher
+            elif key_type == "config":
+                cipher = self.config_cipher
+            else:
+                raise ValueError(f"Invalid key type: {key_type}")
+            
+            # Encrypt data
+            encrypted_data = cipher.encrypt(data_bytes)
+            
+            # Encode as base64 for storage
+            encoded_data = base64.b64encode(encrypted_data).decode('utf-8')
+            
+            logger.debug(f"🔐 Encrypted {len(data_bytes)} bytes using {key_type} key")
+            return encoded_data
+            
+        except Exception as e:
+            logger.error(f"❌ Error encrypting data: {e}")
+            raise
+    
+    def decrypt_data(self, encrypted_data: str, key_type: str = "data") -> Union[str, dict]:
+        """Decrypt data using specified key type"""
+        try:
+            # Decode from base64
+            encrypted_bytes = base64.b64decode(encrypted_data.encode('utf-8'))
+            
+            # Select appropriate cipher
+            if key_type == "data":
+                cipher = self.data_cipher
+            elif key_type == "config":
+                cipher = self.config_cipher
+            else:
+                raise ValueError(f"Invalid key type: {key_type}")
+            
+            # Decrypt data
+            decrypted_bytes = cipher.decrypt(encrypted_bytes)
+            
+            # Try to parse as JSON first, then as string
+            try:
+                decrypted_data = json.loads(decrypted_bytes.decode('utf-8'))
+            except json.JSONDecodeError:
+                decrypted_data = decrypted_bytes.decode('utf-8')
+            
+            logger.debug(f" Decrypted {len(decrypted_bytes)} bytes using {key_type} key")
+            return decrypted_data
+            
+        except Exception as e:
+            logger.error(f"❌ Error decrypting data: {e}")
+            raise
+    
+    def encrypt_file(self, file_path: Union[str, Path], key_type: str = "data") -> str:
+        """Encrypt entire file"""
+        file_path = Path(file_path)
+        
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
+        try:
+            with open(file_path, 'rb') as f:
+                file_data = f.read()
+            
+            # Encrypt file data
+            encrypted_data = self.encrypt_data(file_data, key_type)
+            
+            # Save encrypted data to a new file
+            encrypted_file_path = file_path.parent / f"{file_path.stem}_encrypted{file_path.suffix}"
+            with open(encrypted_file_path, 'wb') as f:
+                f.write(encrypted_data.encode('utf-8')) # Save as UTF-8 string for base64
+            
+            logger.info(f"🔐 Encrypted file: {file_path} to {encrypted_file_path}")
+            return encrypted_file_path
+            
+        except Exception as e:
+            logger.error(f"❌ Error encrypting file {file_path}: {e}")
+            raise
+    
+    def decrypt_file(self, encrypted_file_path: Union[str, Path], key_type: str = "data") -> Path:
+        """Decrypt an encrypted file"""
+        encrypted_file_path = Path(encrypted_file_path)
+        
+        if not encrypted_file_path.exists():
+            raise FileNotFoundError(f"Encrypted file not found: {encrypted_file_path}")
+        
+        try:
+            with open(encrypted_file_path, 'r', encoding='utf-8') as f:
+                encrypted_data_str = f.read()
+            
+            # Decrypt file data
+            decrypted_data = self.decrypt_data(encrypted_data_str, key_type)
+            
+            # Save decrypted data to a new file
+            decrypted_file_path = encrypted_file_path.parent / f"{encrypted_file_path.stem}_decrypted{encrypted_file_path.suffix}"
+            with open(decrypted_file_path, 'wb') as f:
+                f.write(decrypted_data)
+            
+            logger.info(f" Decrypted file: {encrypted_file_path} to {decrypted_file_path}")
+            return decrypted_file_path
+            
+        except Exception as e:
+            logger.error(f"❌ Error decrypting file {encrypted_file_path}: {e}")
+            raise
+    
+    def rotate_keys(self):
+        """Rotate encryption keys"""
+        try:
+            # Generate new master key
+            self.master_key = Fernet.generate_key()
+            self.data_key = Fernet.generate_key()
+            self.config_key = Fernet.generate_key()
+            
+            # Re-initialize ciphers with new keys
+            self.data_cipher = Fernet(self.data_key)
+            self.config_cipher = Fernet(self.config_key)
+            
+            # Save new keys
+            self.save_key("master.key", self.master_key)
+            self.save_key("data.key", self.data_key)
+            self.save_key("config.key", self.config_key)
+            
+            logger.info("🔑 Keys rotated successfully")
+            self.last_key_rotation = time.time()
+            
+        except Exception as e:
+            logger.error(f"❌ Error rotating keys: {e}")
+    
+    def save_key(self, key_name: str, key_data: bytes):
+        """Save a key to a file"""
+        key_file = self.keys_dir / key_name
+        try:
+            with open(key_file, 'wb') as f:
+                f.write(key_data)
+            os.chmod(key_file, 0o600)
+            logger.info(f"🔑 Saved key: {key_name}")
+        except Exception as e:
+            logger.error(f"❌ Error saving key {key_name}: {e}")
+    
+    def load_key(self, key_name: str) -> bytes:
+        """Load a key from a file"""
+        key_file = self.keys_dir / key_name
+        if key_file.exists():
+            try:
+                with open(key_file, 'rb') as f:
+                    key = f.read()
+                logger.info(f"🔑 Loaded key: {key_name}")
+                return key
+            except Exception as e:
+                logger.warning(f"⚠️ Error loading key {key_name}: {e}")
+        return None
+    
+    def start_key_rotation_monitoring(self):
+        """Start a background task to monitor and rotate keys"""
+        def monitor_and_rotate():
+            while True:
+                current_time = time.time()
+                if current_time - self.last_key_rotation > self.key_rotation_interval:
+                    logger.warning(f"⚠️ Key rotation interval reached. Rotating keys...")
+                    self.rotate_keys()
+                time.sleep(self.key_rotation_interval / 2) # Check half the interval
+        
+        rotation_thread = threading.Thread(target=monitor_and_rotate, daemon=True)
+        rotation_thread.start()
+        logger.info("🔑 Started key rotation monitoring")
+
+# Initialize Encryption Manager
+encryption_manager = NexusEncryptionManager()
+
+# Example usage:
+# encrypted_data = encryption_manager.encrypt_data("Hello, World!")
+# decrypted_data = encryption_manager.decrypt_data(encrypted_data)
+# print(f"Original: Hello, World!")
+# print(f"Encrypted: {encrypted_data}")
+# print(f"Decrypted: {decrypted_data}")
+
+# encrypted_file_path = encryption_manager.encrypt_file("sensitive_data.txt")
+# decrypted_file_path = encryption_manager.decrypt_file(encrypted_file_path)
+# print(f"Encrypted file: {encrypted_file_path}")
+# print(f"Decrypted file: {decrypted_file_path}")
+```

@@ -1,0 +1,625 @@
+{
+  "timestamp": "2025-09-10T16:37:25.361022",
+  "sot_status": {
+    "total_sot_areas": 26,
+    "total_files": 26,
+    "validated_files": 26,
+    "invalid_files": 0,
+    "validation_success_rate": 100.0
+  },
+  "priority_breakdown": {
+    "CRITICAL": 4,
+    "HIGH": 4,
+    "MEDIUM": 18,
+    "LOW": 0
+  },
+  "file_type_breakdown": {
+    "python": 15,
+    "shell": 4,
+    "txt": 1,
+    "yaml": 3,
+    "md": 3
+  },
+  "compliance_status": "COMPLIANT",
+  "files": [
+    {
+      "category": "MAIN_APP",
+      "path": "main_optimized.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.CRITICAL",
+      "size": 7441,
+      "hash": "5fa84961194289238aba8fe4aab5070790200d662c48d150be6b9b73849072e9",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "os",
+          "logging",
+          "asyncio",
+          "contextlib",
+          "fastapi",
+          "fastapi.middleware.cors",
+          "fastapi.middleware.gzip",
+          "fastapi.middleware.trustedhost",
+          "fastapi.responses",
+          "uvicorn",
+          "prometheus_client",
+          "fastapi.responses",
+          "redis",
+          "json",
+          "typing",
+          "psutil"
+        ]
+      }
+    },
+    {
+      "category": "SIMPLE_APP",
+      "path": "NEXUS_app/backend/simple_app.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 534,
+      "hash": "19e7c53b70dc30218301d4394ba085f7e52f00ab5fb4b7bc8f24fc1c2e6935d5",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "fastapi",
+          "uvicorn"
+        ]
+      }
+    },
+    {
+      "category": "ENHANCED_APP",
+      "path": "NEXUS_app/backend/main_enhanced.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.HIGH",
+      "size": 7667,
+      "hash": "17cfe9af2830a248d26f433b4f53daf32634b4a9fbc95e56a2efcc0a040487ae",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "fastapi",
+          "fastapi.middleware.cors",
+          "fastapi.middleware.trustedhost",
+          "fastapi.responses",
+          "fastapi.staticfiles",
+          "contextlib",
+          "time",
+          "logging",
+          "uvicorn",
+          "datetime",
+          "api",
+          "routers",
+          "middleware.enhanced_security",
+          "middleware.rate_limiting",
+          "middleware.logging",
+          "database.config",
+          "database.models"
+        ]
+      }
+    },
+    {
+      "category": "START_APP",
+      "path": "NEXUS_app/backend/start_app.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 1349,
+      "hash": "37689022fee76061c796a7a5fd42a1328f22711e54616ed2f0ace8b0419520bd",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "sys",
+          "os",
+          "uvicorn",
+          "pathlib"
+        ]
+      }
+    },
+    {
+      "category": "TEST_IMPORT",
+      "path": "NEXUS_app/backend/test_import.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 843,
+      "hash": "c3ce42272d0df1bfb7bd7ac0949790f19c8a65fd617be84fc2dcffeced6b5f8e",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "sys",
+          "fastapi",
+          "starlette",
+          "main_enhanced",
+          "traceback"
+        ]
+      }
+    },
+    {
+      "category": "CONTINUOUS_TODO_AUTOMATION",
+      "path": "nexus_automation/continuous_todo_automation.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.CRITICAL",
+      "size": 135264,
+      "hash": "d17b02b12157a17580e83c436af2f1bd8874493cf364fd7f84535361c3bd48aa",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "os",
+          "sys",
+          "json",
+          "time",
+          "logging",
+          "asyncio",
+          "subprocess",
+          "glob",
+          "re",
+          "datetime",
+          "pathlib",
+          "typing",
+          "dataclasses",
+          "enum",
+          "yaml",
+          "requests",
+          "psutil",
+          "kubernetes",
+          "argparse"
+        ]
+      }
+    },
+    {
+      "category": "ENHANCED_TODO_PROCESSOR",
+      "path": "enhanced_todo_processor.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 32924,
+      "hash": "07d8ac889648306f3ad9cfc14739e3f9613a8a4860c5b68f5436a2a234262283",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "os",
+          "sys",
+          "json",
+          "re",
+          "asyncio",
+          "logging",
+          "argparse",
+          "datetime",
+          "pathlib",
+          "typing",
+          "dataclasses",
+          "enum",
+          "hashlib",
+          "uuid"
+        ]
+      }
+    },
+    {
+      "category": "AUTOMATION_ORCHESTRATOR",
+      "path": "automation_orchestrator.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 18345,
+      "hash": "af791edf4a7d295ca36f910fef54770c39af34485820237c0ffd0a7861837ceb",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "os",
+          "sys",
+          "json",
+          "asyncio",
+          "logging",
+          "argparse",
+          "threading",
+          "time",
+          "signal",
+          "datetime",
+          "pathlib",
+          "typing",
+          "dataclasses",
+          "concurrent.futures",
+          "enhanced_todo_processor",
+          "robust_todo_parser",
+          "intelligent_automation_engine"
+        ]
+      }
+    },
+    {
+      "category": "ROBUST_TODO_PARSER",
+      "path": "robust_todo_parser.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 31817,
+      "hash": "ca574cd1b1403ef6b1d162acb3ecbb153658ea13aeba2f2f474deef3c083c2fb",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "os",
+          "sys",
+          "json",
+          "re",
+          "asyncio",
+          "logging",
+          "argparse",
+          "datetime",
+          "pathlib",
+          "typing",
+          "dataclasses",
+          "enum",
+          "hashlib",
+          "uuid",
+          "difflib"
+        ]
+      }
+    },
+    {
+      "category": "LAUNCH_ENHANCED_AUTOMATION",
+      "path": "launch_enhanced_automation.sh",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 18796,
+      "hash": "9f5610ea2c1a6a798417f1271a8b56c3079879edbd3b1a55a2cf4869e8959b96",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [],
+        "file_type": "shell",
+        "dependencies": []
+      }
+    },
+    {
+      "category": "BACKEND_ROUTERS",
+      "path": "NEXUS_app/backend/routers.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.HIGH",
+      "size": 8184,
+      "hash": "cf6e812c3528be71e15e217f91507ea14e12e216ba16bf4b10d48f84329a2333",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "logging",
+          "fastapi",
+          "typing",
+          "sqlalchemy.orm",
+          "fastapi.security",
+          "datetime",
+          "database.config",
+          "database.models",
+          "auth.jwt_auth",
+          "models.api_models",
+          "auth.oauth2"
+        ]
+      }
+    },
+    {
+      "category": "BACKEND_API_MODELS",
+      "path": "NEXUS_app/backend/models/api_models.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 13733,
+      "hash": "3ae986b12c9e1b13ded5b77facba9679c4fb72416fa1f904149264b72b612764",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "pydantic",
+          "typing",
+          "datetime",
+          "enum"
+        ]
+      }
+    },
+    {
+      "category": "BACKEND_API_UTILITIES",
+      "path": "NEXUS_app/backend/api/utilities.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 17915,
+      "hash": "4b04ccf333446ef0a09326db2d6d67f6a4dc5657634f894eb95bc87298cf0d15",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "fastapi",
+          "sqlalchemy.orm",
+          "typing",
+          "datetime",
+          "uuid",
+          "json",
+          "logging",
+          "csv",
+          "io",
+          "base64",
+          "database.config",
+          "database.models",
+          "auth.jwt_auth",
+          "models.api_models",
+          "re"
+        ]
+      }
+    },
+    {
+      "category": "BACKEND_API_ADVANCED",
+      "path": "NEXUS_app/backend/api/advanced.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 15991,
+      "hash": "9790eac58a5da28228b6cbc43a2965aa7985e64366dedc523715c6e22be12c73",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "fastapi",
+          "sqlalchemy.orm",
+          "typing",
+          "datetime",
+          "uuid",
+          "json",
+          "logging",
+          "asyncio",
+          "database.config",
+          "database.models",
+          "auth.jwt_auth",
+          "models.api_models",
+          "secrets"
+        ]
+      }
+    },
+    {
+      "category": "BACKEND_LOGGING_MIDDLEWARE",
+      "path": "NEXUS_app/backend/middleware/logging.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 1017,
+      "hash": "b60daf8f55aa4dd8af3edda61e98bff3b4d424d546334bc564f441f575711ddc",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "starlette.middleware.base",
+          "starlette.types",
+          "fastapi",
+          "time",
+          "logging"
+        ]
+      }
+    },
+    {
+      "category": "BACKEND_RATE_LIMITING",
+      "path": "NEXUS_app/backend/middleware/rate_limiting.py",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 1698,
+      "hash": "2a1a8b40106c95e585f8209d7ce213d22a49c99f3bf68f1611924d9e04baccaf",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [
+          "Missing docstring"
+        ],
+        "file_type": "python",
+        "dependencies": [
+          "starlette.middleware.base",
+          "starlette.responses",
+          "starlette.types",
+          "fastapi",
+          "time",
+          "collections",
+          "logging"
+        ]
+      }
+    },
+    {
+      "category": "REQUIREMENTS",
+      "path": "requirements.txt",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.CRITICAL",
+      "size": 793,
+      "hash": "f7e246498d89de39f873947dea5b338371aca3b6ece287d7d52c6aa40ccedb6c",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [],
+        "file_type": "txt",
+        "dependencies": []
+      }
+    },
+    {
+      "category": "DOCKER_COMPOSE",
+      "path": "nexus_docker/docker-compose.yml",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.CRITICAL",
+      "size": 6433,
+      "hash": "f4e9cf5f966bee68d234a0b83e8c8145e45bb0f65e1bb3ce657cd0bce0902384",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [],
+        "file_type": "yaml",
+        "dependencies": []
+      }
+    },
+    {
+      "category": "K8S_PLATFORM",
+      "path": "k8s/nexus-platform.yaml",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.HIGH",
+      "size": 20632,
+      "hash": "a651bff1e4544dc9082a1d3e333d8830e6103f882822aec8fa8d8216f4b8faa0",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [],
+        "file_type": "yaml",
+        "dependencies": []
+      }
+    },
+    {
+      "category": "K8S_APPLICATIONS",
+      "path": "k8s/nexus-applications.yaml",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 16103,
+      "hash": "c5d159838aef0e7d782541fd92d26b051f76aacad4bdc41661790290c9a229f2",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [],
+        "file_type": "yaml",
+        "dependencies": []
+      }
+    },
+    {
+      "category": "README",
+      "path": "README.md",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 6107,
+      "hash": "0d5432cccd0d0e2b6e19810edd1022b9f15babc5561cb015638cfe8b0ff7724d",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [],
+        "file_type": "md",
+        "dependencies": []
+      }
+    },
+    {
+      "category": "MASTER_TODO",
+      "path": "master_todo.md",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 57344,
+      "hash": "9587155a3702821aec53f4ef675373249f174482e0bf9ffa33a587f7f4878252",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [],
+        "file_type": "md",
+        "dependencies": []
+      }
+    },
+    {
+      "category": "PRODUCTION_READINESS",
+      "path": "PRODUCTION_READINESS_ASSESSMENT.md",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 7708,
+      "hash": "1b19d3e02ea770d7921b283ddf2961f904a527655cd64765811710d7068371bd",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [],
+        "file_type": "md",
+        "dependencies": []
+      }
+    },
+    {
+      "category": "DEPLOY_PRODUCTION",
+      "path": "deploy_production.sh",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.HIGH",
+      "size": 12079,
+      "hash": "4c1b9df40795bfb5f1cdaa9a0693021a3663cb21f5c456f331ae655df93dddfc",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [],
+        "file_type": "shell",
+        "dependencies": []
+      }
+    },
+    {
+      "category": "SETUP_SCRIPT",
+      "path": "setup_nexus.sh",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 9767,
+      "hash": "9c8e1614ce22fdc43cac086c23e27a71065ec23ba3590ae5a54ac159677a2470",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [],
+        "file_type": "shell",
+        "dependencies": []
+      }
+    },
+    {
+      "category": "START_PRODUCTION",
+      "path": "start_production.sh",
+      "status": "SOTStatus.VALIDATED",
+      "priority": "SOTPriority.MEDIUM",
+      "size": 879,
+      "hash": "9edc99efbb8a5764e7bd1fab9db091f21baefa1a4bf60ae99a1a8b6d6fa2dc16",
+      "validation_result": {
+        "is_valid": true,
+        "errors": [],
+        "warnings": [],
+        "file_type": "shell",
+        "dependencies": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,334 @@
+# Nexus Platform - Unified Kubernetes Services
+# Service definitions for all components
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-nginx
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: nginx
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: 443
+    protocol: TCP
+    name: https
+  selector:
+    app: nexus-nginx
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-api
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5000
+    targetPort: 5000
+    protocol: TCP
+    name: api
+  selector:
+    app: nexus-api
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-auth
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: auth
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5001
+    targetPort: 5001
+    protocol: TCP
+    name: auth
+  selector:
+    app: nexus-auth
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-ui
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: ui
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: ui
+  selector:
+    app: nexus-ui
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-sot
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: sot
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: sot
+  selector:
+    app: nexus-sot
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-monitoring
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9090
+    targetPort: 9090
+    protocol: TCP
+    name: prometheus
+  selector:
+    app: nexus-monitoring
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-grafana
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: grafana
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: grafana
+  selector:
+    app: nexus-grafana
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-postgres
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: postgres
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+    name: postgres
+  selector:
+    app: nexus-postgres
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-redis
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: redis
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+    name: redis
+  selector:
+    app: nexus-redis
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-rabbitmq
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: rabbitmq
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5672
+    targetPort: 5672
+    protocol: TCP
+    name: amqp
+  - port: 15672
+    targetPort: 15672
+    protocol: TCP
+    name: management
+  selector:
+    app: nexus-rabbitmq
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-neo4j
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: neo4j
+spec:
+  type: ClusterIP
+  ports:
+  - port: 7474
+    targetPort: 7474
+    protocol: TCP
+    name: http
+  - port: 7687
+    targetPort: 7687
+    protocol: TCP
+    name: bolt
+  selector:
+    app: nexus-neo4j
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-minio
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: minio
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9000
+    targetPort: 9000
+    protocol: TCP
+    name: api
+  - port: 9001
+    targetPort: 9001
+    protocol: TCP
+    name: console
+  selector:
+    app: nexus-minio
+
+---
+# Ingress for external access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nexus-ingress
+  namespace: nexus-platform
+  labels:
+    app: nexus-platform
+    component: ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "60s"
+spec:
+  tls:
+  - hosts:
+    - api.nexus.local
+    - auth.nexus.local
+    - ui.nexus.local
+    - sot.nexus.local
+    - monitoring.nexus.local
+    - grafana.nexus.local
+    secretName: nexus-tls-secrets
+  rules:
+  - host: api.nexus.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nexus-api
+            port:
+              number: 5000
+  - host: auth.nexus.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nexus-auth
+            port:
+              number: 5001
+  - host: ui.nexus.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nexus-ui
+            port:
+              number: 3000
+  - host: sot.nexus.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nexus-sot
+            port:
+              number: 8000
+  - host: monitoring.nexus.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nexus-monitoring
+            port:
+              number: 9090
+  - host: grafana.nexus.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nexus-grafana
+            port:
+              number: 3000

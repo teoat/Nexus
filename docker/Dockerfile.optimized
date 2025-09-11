@@ -1,0 +1,87 @@
+# Optimized Production Dockerfile for Nexus Platform
+# Multi-stage build with security hardening and performance optimization
+
+# Build stage - optimized for dependency compilation
+FROM python:3.13-slim as builder
+
+# Set build environment variables for optimization
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=100 \
+    PIP_FIND_LINKS="https://pypi.org/simple/" \
+    BUILD_ENV=production
+
+# Install build dependencies in a single layer
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    gcc \
+    g++ \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Create optimized virtual environment
+RUN python -m venv /opt/venv --system-site-packages
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy and install requirements with optimization
+COPY requirements_enhanced.txt /tmp/
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r /tmp/requirements_enhanced.txt && \
+    pip cache purge
+
+# Production stage - minimal runtime image
+FROM python:3.13-slim as production
+
+# Security and performance environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH="/app" \
+    PYTHONHASHSEED=random \
+    PYTHONIOENCODING=utf-8 \
+    ENVIRONMENT=production
+
+# Install only runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Create non-root user with specific UID/GID for security
+RUN groupadd -r nexus -g 1001 && \
+    useradd -r -g nexus -u 1001 -d /app -s /bin/bash nexus
+
+# Copy optimized virtual environment from builder
+COPY --from=builder --chown=nexus:nexus /opt/venv /opt/venv
+
+# Set working directory
+WORKDIR /app
+
+# Copy application code with proper ownership
+COPY --chown=nexus:nexus . .
+
+# Create application directories with proper permissions
+RUN mkdir -p /app/logs /app/tmp /app/uploads /app/cache && \
+    chmod -R 755 /app && \
+    chmod -R 777 /app/logs /app/tmp /app/uploads /app/cache
+
+# Switch to non-root user
+USER nexus
+
+# Health check with proper timeout and retry logic
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Optimized startup command with proper worker scaling
+CMD ["sh", "-c", "uvicorn main_enhanced:app --host 0.0.0.0 --port 8000 --workers ${WORKERS:-4} --worker-class uvicorn.workers.UvicornWorker --access-log --log-level info"]

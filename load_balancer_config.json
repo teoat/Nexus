@@ -1,0 +1,34 @@
+{
+  "strategy": "round_robin",
+  "health_check_interval": 30,
+  "services": {
+    "database": {
+      "primary": "postgresql_docker",
+      "secondary": "postgresql_k8s",
+      "failover_threshold": 3
+    },
+    "cache": {
+      "primary": "redis_docker",
+      "secondary": "redis_k8s",
+      "failover_threshold": 3
+    }
+  },
+  "rules": [
+    {
+      "condition": "postgresql_docker.health == 'healthy'",
+      "action": "use_primary_database"
+    },
+    {
+      "condition": "postgresql_docker.health != 'healthy'",
+      "action": "failover_to_k8s_database"
+    },
+    {
+      "condition": "redis_docker.health == 'healthy'",
+      "action": "use_primary_cache"
+    },
+    {
+      "condition": "redis_docker.health != 'healthy'",
+      "action": "failover_to_k8s_cache"
+    }
+  ]
+}

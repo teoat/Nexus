@@ -1,0 +1,105 @@
+{
+  "execution": {
+    "min_todos_per_cycle": 20,
+    "max_todos_per_cycle": 100,
+    "cycle_interval": 60,
+    "max_cycles": 0,
+    "auto_scaling": true,
+    "refinement_enabled": true,
+    "max_retries": 5,
+    "retry_delay": 30
+  },
+  "phases": {
+    "infrastructure": {
+      "priority": 1,
+      "enabled": true,
+      "timeout": 300,
+      "retries": 3,
+      "production_impact": "high"
+    },
+    "security": {
+      "priority": 2,
+      "enabled": true,
+      "timeout": 600,
+      "retries": 2,
+      "production_impact": "critical"
+    },
+    "services": {
+      "priority": 3,
+      "enabled": true,
+      "timeout": 900,
+      "retries": 3,
+      "production_impact": "high"
+    },
+    "monitoring": {
+      "priority": 4,
+      "enabled": true,
+      "timeout": 300,
+      "retries": 2,
+      "production_impact": "medium"
+    },
+    "optimization": {
+      "priority": 5,
+      "enabled": true,
+      "timeout": 600,
+      "retries": 2,
+      "production_impact": "medium"
+    },
+    "performance": {
+      "priority": 6,
+      "enabled": true,
+      "timeout": 900,
+      "retries": 2,
+      "production_impact": "high"
+    },
+    "compliance": {
+      "priority": 7,
+      "enabled": true,
+      "timeout": 1200,
+      "retries": 1,
+      "production_impact": "critical"
+    }
+  },
+  "resources": {
+    "cpu_target_standard": 60.0,
+    "cpu_target_refinement": 70.0,
+    "memory_target": 60.0,
+    "min_workers": 1,
+    "max_workers": 20,
+    "graceful_down_threshold": 50
+  },
+  "sot": {
+    "system_id": "enhanced_continuous_sot_automation",
+    "system_name": "Enhanced Continuous SOT Automation",
+    "version": "3.0.0",
+    "primary_authority": true,
+    "backup_interval": 300,
+    "lock_timeout": 3600,
+    "auto_failover": true
+  },
+  "redundancy": {
+    "primary_system": "enhanced_continuous_sot_automation",
+    "backup_system": "robust_parallel_worker_system",
+    "fallback_system": "enhanced_continuous_todo_automation",
+    "health_check_interval": 30,
+    "max_retries_per_system": 3,
+    "circuit_breaker_threshold": 10,
+    "failover_timeout": 60
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "enhanced_continuous_sot_automation.log",
+    "max_size": 10485760,
+    "backup_count": 5
+  },
+  "monitoring": {
+    "enable_dashboard": true,
+    "dashboard_port": 8080,
+    "metrics_interval": 30,
+    "alert_thresholds": {
+      "cpu_usage": 85.0,
+      "memory_usage": 85.0,
+      "error_rate": 10.0
+    }
+  }
+}
