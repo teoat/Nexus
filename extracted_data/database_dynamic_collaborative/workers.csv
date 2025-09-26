@@ -1,0 +1,4 @@
+id,name,capabilities,status,current_task,task_history,performance_metrics,last_heartbeat,created_at
+code_quality_worker_agent_20250823_145549,Code Quality Engineer,"[""code_review"", ""testing"", ""documentation""]",offline,,[],"{""tasks_completed"": 0, ""tasks_failed"": 0, ""average_completion_time"": 0.0, ""success_rate"": 1.0}",2025-08-23T14:55:49.331316,2025-08-23T14:55:49.331318
+general_worker_agent_20250823_145549,General Developer,"[""development"", ""integration"", ""deployment""]",offline,,[],"{""tasks_completed"": 0, ""tasks_failed"": 0, ""average_completion_time"": 0.0, ""success_rate"": 1.0}",2025-08-23T14:55:49.333221,2025-08-23T14:55:49.333222
+infrastructure_worker_agent_20250823_145549,Infrastructure Specialist,"[""docker"", ""kubernetes"", ""monitoring""]",offline,,[],"{""tasks_completed"": 0, ""tasks_failed"": 0, ""average_completion_time"": 0.0, ""success_rate"": 1.0}",2025-08-23T14:55:49.335204,2025-08-23T14:55:49.335205
